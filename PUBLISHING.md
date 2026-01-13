@@ -12,7 +12,7 @@
    ```
 
 2. **Verificar o package.json**
-   - ✅ Nome do pacote: `@mvp24hours/dotnet-mcp`
+   - ✅ Nome do pacote: `mvp24hours-dotnet-mcp`
    - ✅ Versão: `1.0.0`
    - ✅ Licença: `MIT`
    - ✅ Autor: `Kallebe Lins`
@@ -49,7 +49,7 @@ npm publish
 Usuários poderão instalar com:
 
 ```bash
-npm install -g @mvp24hours/dotnet-mcp
+npm install -g mvp24hours-dotnet-mcp
 ```
 
 E configurar no Cursor/Claude Desktop:
@@ -59,7 +59,7 @@ E configurar no Cursor/Claude Desktop:
   "mcpServers": {
     "mvp24hours-dotnet": {
       "command": "npx",
-      "args": ["@mvp24hours/dotnet-mcp"]
+      "args": ["mvp24hours-dotnet-mcp"]
     }
   }
 }
@@ -87,9 +87,9 @@ Seu repositório já está no GitHub: `https://github.com/kallebelins/mvp24hours
 
 3. **Adicionar Badges ao README.md**
    ```markdown
-   ![npm version](https://img.shields.io/npm/v/@mvp24hours/dotnet-mcp)
-   ![license](https://img.shields.io/npm/l/@mvp24hours/dotnet-mcp)
-   ![downloads](https://img.shields.io/npm/dm/@mvp24hours/dotnet-mcp)
+   ![npm version](https://img.shields.io/npm/v/mvp24hours-dotnet-mcp)
+   ![license](https://img.shields.io/npm/l/mvp24hours-dotnet-mcp)
+   ![downloads](https://img.shields.io/npm/dm/mvp24hours-dotnet-mcp)
    ```
 
 4. **Adicionar ao Model Context Protocol Registry**
@@ -143,7 +143,7 @@ O Model Context Protocol mantém um registry oficial de servidores:
    - Adicione informações do seu servidor:
      ```json
      {
-       "name": "@mvp24hours/dotnet-mcp",
+       "name": "mvp24hours-dotnet-mcp",
        "description": "Intelligent documentation routing for Mvp24Hours .NET Framework",
        "repository": "https://github.com/kallebelins/mvp24hours-dotnet-mcp",
        "category": "documentation",
@@ -225,7 +225,7 @@ npm publish --access public
 
 ## 📊 Monitoramento Pós-Publicação
 
-- **NPM Stats**: https://www.npmjs.com/package/@mvp24hours/dotnet-mcp
+- **NPM Stats**: https://www.npmjs.com/package/mvp24hours-dotnet-mcp
 - **GitHub Insights**: Aba "Insights" do repositório
 - **GitHub Stars**: Acompanhe o crescimento
 - **Issues**: Responda dúvidas e bugs

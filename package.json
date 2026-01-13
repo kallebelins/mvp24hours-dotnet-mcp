@@ -1,5 +1,5 @@
 {
-  "name": "@mvp24hours/dotnet-mcp",
+  "name": "mvp24hours-dotnet-mcp",
   "version": "1.0.0",
   "description": "MCP Server for Mvp24Hours .NET Framework - Intelligent documentation routing for AI agents",
   "type": "module",
@@ -12,19 +12,39 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
     "mvp24hours",
     "dotnet",
+    "dotnet-core",
+    "csharp",
     "ai",
+    "ai-assistant",
     "architecture",
-    "semantic-kernel"
+    "semantic-kernel",
+    "claude",
+    "cursor",
+    "documentation",
+    "framework"
   ],
-  "author": "Kallebe Lins",
+  "author": {
+    "name": "Kallebe Lins",
+    "url": "https://github.com/kallebelins"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kallebelins/mvp24hours-dotnet-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kallebelins/mvp24hours-dotnet-mcp/issues"
+  },
+  "homepage": "https://github.com/kallebelins/mvp24hours-dotnet-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
@@ -37,6 +57,12 @@
   },
   "files": [
     "dist",
-    "docs"
-  ]
+    "docs",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

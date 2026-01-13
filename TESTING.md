@@ -666,7 +666,7 @@ Após validar os testes:
 
 2. **Testar versão publicada**:
    ```bash
-   npx @modelcontextprotocol/inspector npx @mvp24hours/dotnet-mcp
+   npx @modelcontextprotocol/inspector npx mvp24hours-dotnet-mcp
    ```
 
 3. **Documentar uso** no README principal

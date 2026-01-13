@@ -21,7 +21,7 @@ The Mvp24Hours framework has extensive documentation covering:
 ### From NPM (Recommended)
 
 ```bash
-npm install -g @mvp24hours/dotnet-mcp
+npm install -g mvp24hours-dotnet-mcp
 ```
 
 ### From Source
@@ -44,7 +44,7 @@ Add to your `~/.cursor/mcp.json`:
   "mcpServers": {
     "mvp24hours-dotnet": {
       "command": "npx",
-      "args": ["@mvp24hours/dotnet-mcp"]
+      "args": ["mvp24hours-dotnet-mcp"]
     }
   }
 }
@@ -72,7 +72,7 @@ Add to your Claude Desktop config:
   "mcpServers": {
     "mvp24hours-dotnet": {
       "command": "npx",
-      "args": ["@mvp24hours/dotnet-mcp"]
+      "args": ["mvp24hours-dotnet-mcp"]
     }
   }
 }
