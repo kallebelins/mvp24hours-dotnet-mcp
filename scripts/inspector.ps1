@@ -48,7 +48,7 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  INSTRUCOES" -ForegroundColor White
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "1. Acesse a URL que aparecera abaixo" -ForegroundColor Gray
+Write-Host "1. Aguarde o Inspector abrir no navegador" -ForegroundColor Gray
 Write-Host "2. Na interface do Inspector:" -ForegroundColor Gray
 Write-Host "   - Command: node" -ForegroundColor Cyan
 Write-Host "   - Arguments: $absolutePath" -ForegroundColor Cyan
@@ -60,5 +60,5 @@ Write-Host ""
 # Definir variável de ambiente para desabilitar autenticação
 $env:DANGEROUSLY_OMIT_AUTH = "true"
 
-# Executar o Inspector
-npx @modelcontextprotocol/inspector
+# Executar o Inspector com o comando correto
+npx @modelcontextprotocol/inspector node $absolutePath
