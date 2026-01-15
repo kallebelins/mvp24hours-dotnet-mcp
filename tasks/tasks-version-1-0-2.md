@@ -148,21 +148,25 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.6 Atualizar `core-patterns.ts`
 **Arquivo:** `src/tools/core-patterns.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Adicionar topic faltante ao schema enum:
-  - [ ] `infrastructure-abstractions`
-- [ ] Adicionar mapeamento:
-  - [ ] `infrastructure-abstractions` → `core/infrastructure-abstractions.md`
-- [ ] Verificar se todos os outros topics estão mapeados:
-  - [ ] `overview` → `core/home.md`
-  - [ ] `guard-clauses` → `core/guard-clauses.md`
-  - [ ] `value-objects` → `core/value-objects.md`
-  - [ ] `strongly-typed-ids` → `core/strongly-typed-ids.md`
-  - [ ] `functional-patterns` → `core/functional-patterns.md`
-  - [ ] `smart-enums` → `core/smart-enums.md`
-  - [ ] `entity-interfaces` → `core/entity-interfaces.md`
-  - [ ] `exceptions` → `core/exceptions.md`
+- [x] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
+- [x] Adicionar topic faltante ao schema enum:
+  - [x] `infrastructure-abstractions`
+- [x] Criar mapeamento `topicToFiles` para carregar docs reais:
+  - [x] `overview` → `core/home.md`
+  - [x] `guard-clauses` → `core/guard-clauses.md`
+  - [x] `value-objects` → `core/value-objects.md`
+  - [x] `strongly-typed-ids` → `core/strongly-typed-ids.md`
+  - [x] `functional-patterns` → `core/functional-patterns.md`
+  - [x] `smart-enums` → `core/smart-enums.md`
+  - [x] `entity-interfaces` → `core/entity-interfaces.md`
+  - [x] `infrastructure` → `core/infrastructure-abstractions.md` (alias)
+  - [x] `infrastructure-abstractions` → `core/infrastructure-abstractions.md`
+  - [x] `exceptions` → `core/exceptions.md`
+- [x] Criar `relatedTopics` para cross-referencing
+- [x] Adicionar Quick Reference para cada topic
+- [x] Substituir todo conteúdo hardcoded por `loadDocs()`
 
 ### 1.7 Atualizar `reference-guide.ts`
 **Arquivo:** `src/tools/reference-guide.ts`
@@ -515,7 +519,7 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 | `functional-patterns.md` | `core-patterns` | ✅ |
 | `guard-clauses.md` | `core-patterns` | ✅ |
 | `home.md` | `core-patterns` | ✅ |
-| `infrastructure-abstractions.md` | `core-patterns` | ⏳ Adicionar |
+| `infrastructure-abstractions.md` | `core-patterns` | ✅ |
 | `smart-enums.md` | `core-patterns` | ✅ |
 | `strongly-typed-ids.md` | `core-patterns` | ✅ |
 | `value-objects.md` | `core-patterns` | ✅ |
