@@ -17,6 +17,7 @@ export const infrastructureGuideSchema = {
         "pipeline",
         "caching",
         "caching-advanced",
+        "caching-redis",
         "webapi",
         "webapi-advanced",
         "cronjob",
@@ -44,6 +45,7 @@ const topicToFiles: Record<string, string[]> = {
   pipeline: ["pipeline.md"],
   caching: ["caching-advanced.md"],
   "caching-advanced": ["caching-advanced.md"],
+  "caching-redis": ["caching-redis.md"],
   webapi: ["webapi.md"],
   "webapi-advanced": ["webapi-advanced.md"],
   cronjob: ["cronjob.md"],
@@ -57,10 +59,12 @@ const topicToFiles: Record<string, string[]> = {
  * Related topics for cross-referencing
  */
 const relatedTopics: Record<string, string[]> = {
-  "infrastructure-base": ["modernization/http-resilience.md", "modernization/generic-resilience.md", "caching-advanced", "ai-context/security-patterns.md", "observability/metrics.md"],
+  "infrastructure-base": ["modernization/http-resilience.md", "modernization/generic-resilience.md", "caching-advanced",
+        "caching-redis", "ai-context/security-patterns.md", "observability/metrics.md"],
   pipeline: ["cqrs/behaviors.md", "cqrs/saga/home.md"],
   caching: ["modernization/hybrid-cache.md", "cqrs/integration-caching.md"],
   "caching-advanced": ["modernization/hybrid-cache.md", "cqrs/integration-caching.md", "database/use-repository.md"],
+  "caching-redis": ["modernization/hybrid-cache.md", "caching-advanced", "infrastructure-base", "cqrs/integration-caching.md"],
   webapi: ["webapi-advanced", "modernization/minimal-apis.md", "modernization/native-openapi.md"],
   "webapi-advanced": ["webapi", "modernization/rate-limiting.md", "modernization/problem-details.md"],
   cronjob: ["cronjob-advanced", "cronjob-resilience", "cronjob-observability"],
@@ -78,6 +82,7 @@ const topicDescriptions: Record<string, string> = {
   pipeline: "Pipe and Filters pattern for composing complex operations",
   caching: "Redis caching basics with Mvp24Hours",
   "caching-advanced": "Advanced caching patterns (multi-level, invalidation, resilience)",
+  "caching-redis": "Redis-specific caching with HybridCache L2, extensions, resilience",
   webapi: "ASP.NET Web API configuration and patterns",
   "webapi-advanced": "Advanced Web API features (security, idempotency, versioning)",
   cronjob: "Background job scheduling with CRON expressions",
@@ -315,6 +320,43 @@ builder.Services.AddMvp24HoursMultiLevelCache(options =>
 });
 \`\`\``,
 
+
+    "caching-redis": `## Quick Reference - Redis Caching
+
+| Feature | Description |
+|---------|-------------|
+| HybridCache L2 | Redis as distributed cache layer |
+| IRedisCacheService | High-level Redis operations |
+| Batch Operations | GetMany, SetMany, RemoveMany |
+| Hash Operations | HashSet, HashGet for partial updates |
+| Pattern Removal | RemoveByPattern for bulk invalidation |
+
+### HybridCache with Redis L2
+
+\`\`\`csharp
+builder.Services.AddMvp24HoursHybridCache(options =>
+{
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(30),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+})
+.AddMvp24HoursRedisHybridCacheStore(options =>
+{
+    options.Configuration = "localhost:6379";
+    options.InstanceName = "myapp:";
+});
+\`\`\`
+
+### Key Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| \`HybridCache\` | .NET 9 hybrid L1+L2 cache |
+| \`IRedisCacheService\` | Redis-specific operations |
+| \`IDistributedCache\` | Standard distributed cache |
+| \`IConnectionMultiplexer\` | Raw Redis connection |`,
     cronjob: `## Quick Reference - CronJob Classes
 
 | Class | Description |

@@ -410,15 +410,15 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneÃ§a contexto compl
 
 ### 6.3.2 Adicionar topic `caching-redis` ao `infrastructure-guide.ts`
 **Arquivo:** `src/tools/infrastructure-guide.ts`
-**Status:** â³ Pendente
+**Status:** âœ… ConcluÃ­do
 **Pacote:** `Mvp24Hours.Infrastructure.Caching.Redis`
 
-- [ ] Adicionar topic `caching-redis` ao schema enum
-- [ ] Criar documentaÃ§Ã£o `docs/caching-redis.md` (se nÃ£o existir)
-- [ ] Cobrir features especÃ­ficos do Redis:
-  - [ ] Redis extensions
-  - [ ] ConfiguraÃ§Ã£o simplificada
-  - [ ] HybridCache L2 layer
+- [x] Adicionar topic `caching-redis` ao schema enum
+- [x] Criar documentaÃ§Ã£o `docs/caching-redis.md`
+- [x] Cobrir features especÃ­ficos do Redis:
+  - [x] Redis extensions
+  - [x] ConfiguraÃ§Ã£o simplificada
+  - [x] HybridCache L2 layer
 - [x] Adicionar mapeamento em `topicToFiles`
 - [x] Adicionar Quick Reference
 
@@ -445,7 +445,7 @@ Tabela de verificaÃ§Ã£o final:
 | `Mvp24Hours.Infrastructure` | `infrastructure-guide` | `infrastructure-base` | âœ… |
 | `Mvp24Hours.Application` | `infrastructure-guide` | `application-services` | âœ… |
 | `Mvp24Hours.Infrastructure.Caching` | `infrastructure-guide` | `caching`, `caching-advanced` | âœ… |
-| `Mvp24Hours.Infrastructure.Caching.Redis` | `infrastructure-guide` | `caching-redis` | â³ |
+| `Mvp24Hours.Infrastructure.Caching.Redis` | `infrastructure-guide` | `caching-redis` | âœ… |
 | `Mvp24Hours.Infrastructure.Cqrs` | `cqrs-guide` | commands, queries, etc. | âœ… |
 | `Mvp24Hours.Infrastructure.CronJob` | `infrastructure-guide` | `cronjob`, `cronjob-*` | âœ… |
 | `Mvp24Hours.Infrastructure.Data.EFCore` | `database-advisor` | relational, efcore-advanced | âœ… |
