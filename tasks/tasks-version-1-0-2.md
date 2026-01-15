@@ -390,6 +390,72 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneÃ§a contexto compl
 
 ---
 
+## Fase 6.3: Cobertura Completa de Pacotes NuGet
+
+### 6.3.1 Adicionar topic `infrastructure-base` ao `infrastructure-guide.ts`
+**Arquivo:** `src/tools/infrastructure-guide.ts`
+**Status:** âœ… ConcluÃ­do
+**Pacote:** `Mvp24Hours.Infrastructure`
+
+- [x] Adicionar topic `infrastructure-base` ao schema enum
+- [x] Criar documentaÃ§Ã£o `docs/infrastructure-base.md`
+- [x] Cobrir features do pacote base:
+    - [x] HTTP client factory com Polly resilience
+    - [x] MessagePack serialization
+    - [x] Scriban templates
+    - [x] Redis connectivity base
+    - [x] Health checks base
+- [x] Adicionar mapeamento em `topicToFiles`
+- [x] Adicionar Quick Reference
+
+### 6.3.2 Adicionar topic `caching-redis` ao `infrastructure-guide.ts`
+**Arquivo:** `src/tools/infrastructure-guide.ts`
+**Status:** â³ Pendente
+**Pacote:** `Mvp24Hours.Infrastructure.Caching.Redis`
+
+- [ ] Adicionar topic `caching-redis` ao schema enum
+- [ ] Criar documentaÃ§Ã£o `docs/caching-redis.md` (se nÃ£o existir)
+- [ ] Cobrir features especÃ­ficos do Redis:
+  - [ ] Redis extensions
+  - [ ] ConfiguraÃ§Ã£o simplificada
+  - [ ] HybridCache L2 layer
+- [x] Adicionar mapeamento em `topicToFiles`
+- [x] Adicionar Quick Reference
+
+### 6.3.3 Verificar topic `secrets-management` em `security-patterns.ts`
+**Arquivo:** `src/tools/security-patterns.ts`
+**Status:** âœ… JÃ¡ existe
+**Pacote:** `Mvp24Hours.Infrastructure`
+
+- [x] Verificar se topic `secrets-management` jÃ¡ existe (SIM, existe)
+- [ ] Verificar se cobre todos os features:
+  - [ ] Azure Key Vault integration
+  - [ ] AWS Secrets Manager integration
+  - [ ] ConfiguraÃ§Ã£o segura
+- [ ] Expandir documentaÃ§Ã£o se necessÃ¡rio para alinhar com nuget-packages.md
+
+### 6.3.4 Verificar Cobertura Completa de Pacotes
+**Status:** â³ Pendente
+
+Tabela de verificaÃ§Ã£o final:
+
+| Pacote | Tool | Topic | Status |
+|--------|------|-------|--------|
+| `Mvp24Hours.Core` | `core-patterns` | overview, guards, etc. | âœ… |
+| `Mvp24Hours.Infrastructure` | `infrastructure-guide` | `infrastructure-base` | âœ… |
+| `Mvp24Hours.Application` | `infrastructure-guide` | `application-services` | âœ… |
+| `Mvp24Hours.Infrastructure.Caching` | `infrastructure-guide` | `caching`, `caching-advanced` | âœ… |
+| `Mvp24Hours.Infrastructure.Caching.Redis` | `infrastructure-guide` | `caching-redis` | â³ |
+| `Mvp24Hours.Infrastructure.Cqrs` | `cqrs-guide` | commands, queries, etc. | âœ… |
+| `Mvp24Hours.Infrastructure.CronJob` | `infrastructure-guide` | `cronjob`, `cronjob-*` | âœ… |
+| `Mvp24Hours.Infrastructure.Data.EFCore` | `database-advisor` | relational, efcore-advanced | âœ… |
+| `Mvp24Hours.Infrastructure.Data.MongoDb` | `database-advisor` | nosql, mongodb-advanced | âœ… |
+| `Mvp24Hours.Infrastructure.Pipe` | `infrastructure-guide` | `pipeline` | âœ… |
+| `Mvp24Hours.Infrastructure.RabbitMQ` | `messaging-patterns` | rabbitmq, outbox | âœ… |
+| `Mvp24Hours.WebAPI` | `infrastructure-guide` | `webapi`, `webapi-advanced` | âœ… |
+
+---
+
 ## Fase 7: Testes e ValidaÃ§Ã£o
 
 ### 7.1 Testar CQRS Guide
@@ -644,3 +710,4 @@ Arquivos disponÃ­veis:
 - `use-repository.md`
 - `use-service.md`
 - `use-unitofwork.md`
+

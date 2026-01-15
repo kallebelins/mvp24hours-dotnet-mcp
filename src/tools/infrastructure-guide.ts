@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Infrastructure Guide Tool
  * 
  * Provides documentation for Pipeline, Caching, WebAPI, and CronJob patterns.
@@ -13,6 +13,7 @@ export const infrastructureGuideSchema = {
       type: "string",
       enum: [
         "overview",
+        "infrastructure-base",
         "pipeline",
         "caching",
         "caching-advanced",
@@ -39,6 +40,7 @@ interface InfrastructureGuideArgs {
  */
 const topicToFiles: Record<string, string[]> = {
   overview: ["home.md"],
+  "infrastructure-base": ["infrastructure-base.md"],
   pipeline: ["pipeline.md"],
   caching: ["caching-advanced.md"],
   "caching-advanced": ["caching-advanced.md"],
@@ -55,6 +57,7 @@ const topicToFiles: Record<string, string[]> = {
  * Related topics for cross-referencing
  */
 const relatedTopics: Record<string, string[]> = {
+  "infrastructure-base": ["modernization/http-resilience.md", "modernization/generic-resilience.md", "caching-advanced", "ai-context/security-patterns.md", "observability/metrics.md"],
   pipeline: ["cqrs/behaviors.md", "cqrs/saga/home.md"],
   caching: ["modernization/hybrid-cache.md", "cqrs/integration-caching.md"],
   "caching-advanced": ["modernization/hybrid-cache.md", "cqrs/integration-caching.md", "database/use-repository.md"],
@@ -71,6 +74,7 @@ const relatedTopics: Record<string, string[]> = {
  * Topic descriptions for overview
  */
 const topicDescriptions: Record<string, string> = {
+  "infrastructure-base": "HTTP clients, MessagePack, Scriban templates, Redis connectivity, secrets management",
   pipeline: "Pipe and Filters pattern for composing complex operations",
   caching: "Redis caching basics with Mvp24Hours",
   "caching-advanced": "Advanced caching patterns (multi-level, invalidation, resilience)",
@@ -108,6 +112,9 @@ ${topicList}
 
 ## Quick Reference
 
+### Infrastructure Base
+Base infrastructure module with HTTP client factory (Polly resilience), MessagePack serialization, Scriban templates, Redis connectivity, Azure Key Vault, AWS Secrets Manager, and health checks.
+
 ### Pipeline Pattern
 For complex workflows with multiple processing steps. Supports typed pipelines, middleware, fork/join, and resilience patterns.
 
@@ -127,6 +134,7 @@ Service layer patterns using Mvp24Hours base classes for CRUD operations with Un
 
 | Package | Description |
 |---------|-------------|
+| \`Mvp24Hours.Infrastructure\` | Base infrastructure (HTTP, serialization, secrets, templates) |
 | \`Mvp24Hours.Infrastructure.Pipe\` | Pipeline/Pipe and Filters pattern |
 | \`Mvp24Hours.Infrastructure.Caching\` | Caching abstractions |
 | \`Mvp24Hours.Infrastructure.Caching.Redis\` | Redis caching implementation |
@@ -138,6 +146,9 @@ Service layer patterns using Mvp24Hours base classes for CRUD operations with Un
 
 | Interface | Package | Description |
 |-----------|---------|-------------|
+| \`IMessagePackSerializer\` | Infrastructure | Binary serialization |
+| \`ITemplateEngine\` | Infrastructure | Scriban template rendering |
+| \`ISecretsManager\` | Infrastructure | Secrets retrieval |
 | \`IPipeline\` / \`IPipelineAsync\` | Infrastructure.Pipe | Pipeline orchestration |
 | \`IOperation<T>\` / \`OperationBase\` | Infrastructure.Pipe | Pipeline operation/filter |
 | \`ICacheProvider\` | Infrastructure.Caching | Cache provider abstraction |
@@ -149,7 +160,6 @@ Service layer patterns using Mvp24Hours base classes for CRUD operations with Un
 Use \`mvp24h_infrastructure_guide({ topic: "..." })\` for detailed documentation on each topic.
 `;
 }
-
 function getTopicDoc(topic: string): string {
   const files = topicToFiles[topic];
   
@@ -187,6 +197,58 @@ function getTopicDoc(topic: string): string {
 
 function getQuickReference(topic: string): string | null {
   const references: Record<string, string> = {
+    "infrastructure-base": `## Quick Reference - Infrastructure Base
+
+| Feature | Description |
+|---------|-------------|
+| HTTP Client Factory | Typed clients with Polly resilience |
+| MessagePack | High-performance binary serialization |
+| Scriban Templates | Email/report template engine |
+| Redis Connectivity | Base Redis connection management |
+| Secrets Management | Azure Key Vault, AWS Secrets Manager |
+| Health Checks | Infrastructure health monitoring |
+
+### Key Extensions
+
+\`\`\`csharp
+// HTTP Client with Resilience
+builder.Services.AddMvp24HoursHttpClient<IMyApi, MyApiClient>()
+    .AddMvp24HoursStandardResilienceHandler();
+
+// MessagePack Serialization
+builder.Services.AddMvp24HoursMessagePack();
+
+// Scriban Templates
+builder.Services.AddMvp24HoursScribanTemplates(options => {
+    options.TemplateDirectory = "Templates";
+});
+
+// Redis Connection
+builder.Services.AddMvp24HoursRedisConnection(options => {
+    options.Configuration = "localhost:6379";
+});
+
+// Azure Key Vault
+builder.Services.AddMvp24HoursAzureKeyVault(options => {
+    options.VaultUri = new Uri("https://myvault.vault.azure.net/");
+    options.UseManagedIdentity = true;
+});
+
+// Health Checks
+builder.Services.AddMvp24HoursHealthChecks()
+    .AddRedisHealthCheck("redis", "localhost:6379");
+\`\`\`
+
+### Key Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| \`IMessagePackSerializer\` | Binary serialization |
+| \`ITemplateEngine\` | Template rendering |
+| \`ISecretsManager\` | Secrets retrieval |
+| \`IConnectionMultiplexer\` | Redis connection |
+| \`IHealthCheck\` | Health check interface |`,
+
     pipeline: `## Quick Reference - Pipeline Interfaces
 
 | Interface | Description |
@@ -301,17 +363,7 @@ builder.Services.AddMvp24HoursMultiLevelCache(options =>
 | \`EnableCircuitBreaker\` | false | Enable circuit breaker |
 | \`CircuitBreakerFailureThreshold\` | 5 | Failures before open |
 | \`PreventOverlapping\` | true | Prevent concurrent runs |
-| \`GracefulShutdownTimeout\` | 30s | Shutdown wait time |
-
-### Circuit Breaker States
-
-\`\`\`
-Closed ─── failures ≥ threshold ──→ Open
-  ↑                                   │
-  │                                   │ break duration
-  │                                   ↓
-  └──── success ≥ threshold ──── Half-Open
-\`\`\``,
+| \`GracefulShutdownTimeout\` | 30s | Shutdown wait time |`,
 
     "cronjob-observability": `## Quick Reference - CronJob Observability
 
