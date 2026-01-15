@@ -2,7 +2,10 @@
  * Database Advisor Tool
  * 
  * Recommends database technology and patterns based on data requirements.
+ * Uses real documentation from .md files instead of hardcoded content.
  */
+
+import { loadDoc, loadDocs, docExists } from "../utils/doc-loader.js";
 
 export const databaseAdvisorSchema = {
   type: "object" as const,
@@ -42,6 +45,22 @@ export const databaseAdvisorSchema = {
       },
       description: "Patterns to implement",
     },
+    topic: {
+      type: "string",
+      enum: [
+        "overview",
+        "relational",
+        "nosql",
+        "repository",
+        "unit-of-work",
+        "entity",
+        "context",
+        "service",
+        "efcore-advanced",
+        "mongodb-advanced",
+      ],
+      description: "Specific topic to get documentation for",
+    },
   },
   required: [],
 };
@@ -51,7 +70,74 @@ interface DatabaseAdvisorArgs {
   provider?: "sqlserver" | "postgresql" | "mysql" | "mongodb" | "redis";
   requirements?: string[];
   patterns?: string[];
+  topic?: string;
 }
+
+// Mapping of topics to documentation files
+const topicToFiles: Record<string, string[]> = {
+  overview: [
+    "ai-context/database-patterns.md",
+  ],
+  relational: [
+    "database/relational.md",
+  ],
+  nosql: [
+    "database/nosql.md",
+  ],
+  repository: [
+    "database/use-repository.md",
+  ],
+  "unit-of-work": [
+    "database/use-unitofwork.md",
+  ],
+  entity: [
+    "database/use-entity.md",
+  ],
+  context: [
+    "database/use-context.md",
+  ],
+  service: [
+    "database/use-service.md",
+  ],
+  "efcore-advanced": [
+    "database/efcore-advanced.md",
+  ],
+  "mongodb-advanced": [
+    "database/mongodb-advanced.md",
+  ],
+};
+
+// Related topics for each main topic
+const relatedTopics: Record<string, string[]> = {
+  overview: ["relational", "nosql", "repository", "unit-of-work"],
+  relational: ["efcore-advanced", "entity", "context", "repository", "unit-of-work"],
+  nosql: ["mongodb-advanced", "entity", "repository"],
+  repository: ["unit-of-work", "entity", "service"],
+  "unit-of-work": ["repository", "efcore-advanced"],
+  entity: ["context", "repository", "relational", "nosql"],
+  context: ["entity", "efcore-advanced", "relational"],
+  service: ["repository", "unit-of-work"],
+  "efcore-advanced": ["relational", "context", "repository"],
+  "mongodb-advanced": ["nosql", "repository"],
+};
+
+// Provider to documentation files mapping
+const providerToFiles: Record<string, string[]> = {
+  sqlserver: ["database/relational.md", "database/efcore-advanced.md"],
+  postgresql: ["database/relational.md", "database/efcore-advanced.md"],
+  mysql: ["database/relational.md", "database/efcore-advanced.md"],
+  mongodb: ["database/nosql.md", "database/mongodb-advanced.md"],
+  redis: ["database/nosql.md"],
+};
+
+// Pattern to documentation files mapping
+const patternToFiles: Record<string, string[]> = {
+  repository: ["database/use-repository.md"],
+  "unit-of-work": ["database/use-unitofwork.md"],
+  specification: ["database/efcore-advanced.md"],
+  dapper: ["database/use-unitofwork.md"],
+  hybrid: ["database/efcore-advanced.md", "database/use-unitofwork.md"],
+};
 
 export async function databaseAdvisor(args: unknown): Promise<string> {
   const {
@@ -59,16 +145,30 @@ export async function databaseAdvisor(args: unknown): Promise<string> {
     provider,
     requirements = [],
     patterns = [],
+    topic,
   } = args as DatabaseAdvisorArgs;
 
+  // If a specific topic is requested, return that documentation
+  if (topic) {
+    return getTopicDocumentation(topic);
+  }
+
+  // If no specific parameters, return overview
+  if (!data_type && !provider && requirements.length === 0 && patterns.length === 0) {
+    return getTopicDocumentation("overview");
+  }
+
   // Determine recommended provider
-  let recommendedProvider = provider || determineProvider(data_type, requirements);
-  let recommendedPatterns = patterns.length > 0 ? patterns : determinePatterns(requirements);
+  const recommendedProvider = provider || determineProvider(data_type, requirements);
+  const recommendedPatterns = patterns.length > 0 ? patterns : determinePatterns(requirements);
 
-  const providerInfo = getProviderInfo(recommendedProvider);
-  const patternDocs = getPatternDocs(recommendedPatterns);
+  // Load provider-specific documentation
+  const providerDocs = await loadProviderDocs(recommendedProvider);
+  const patternDocs = await loadPatternDocs(recommendedPatterns);
 
-  return `# Database Configuration
+  const providerInfo = getProviderSummary(recommendedProvider);
+
+  return `# Database Configuration Recommendation
 
 ## Recommended Database: **${providerInfo.name}**
 
@@ -77,47 +177,7 @@ ${providerInfo.reasoning}
 
 ---
 
-## NuGet Packages
-
-\`\`\`xml
-${providerInfo.packages}
-\`\`\`
-
----
-
-## Configuration
-
-### appsettings.json
-
-\`\`\`json
-${providerInfo.appsettings}
-\`\`\`
-
-### Program.cs / ServiceBuilderExtensions
-
-\`\`\`csharp
-${providerInfo.programCs}
-\`\`\`
-
----
-
-## Entity Configuration
-
-\`\`\`csharp
-${providerInfo.entityConfig}
-\`\`\`
-
----
-
-## DbContext Setup
-
-\`\`\`csharp
-${providerInfo.dbContext}
-\`\`\`
-
----
-
-${patternDocs}
+${getQuickReference()}
 
 ---
 
@@ -135,16 +195,84 @@ ${patternDocs}
 
 ---
 
+## Provider Documentation
+
+${providerDocs}
+
+---
+
+${patternDocs ? `## Pattern Documentation\n\n${patternDocs}\n\n---\n\n` : ""}
+
 ## Next Steps
 
 1. Add the NuGet packages to your project
 2. Configure the connection string
-3. Create your DbContext
+3. Create your DbContext (for EF Core) or configure MongoDB options
 4. Register services in DI container
-${patterns.includes("dapper") || requirements.includes("high-write-throughput") 
+${recommendedPatterns.includes("dapper") || requirements.includes("high-write-throughput") 
   ? "5. Consider hybrid approach with Dapper for read-heavy queries" 
   : ""}
+
+---
+
+${getRelatedTopicsSection(recommendedProvider === "mongodb" || recommendedProvider === "redis" ? "nosql" : "relational")}
 `;
+}
+
+function getTopicDocumentation(topic: string): string {
+  const files = topicToFiles[topic];
+  
+  if (!files || files.length === 0) {
+    return `# Topic Not Found\n\nThe topic "${topic}" was not found. Available topics:\n${Object.keys(topicToFiles).map(t => `- ${t}`).join("\n")}`;
+  }
+
+  try {
+    const content = loadDocs(files);
+    const related = relatedTopics[topic] || [];
+    
+    return `${content}
+
+---
+
+${getQuickReference()}
+
+---
+
+${related.length > 0 ? getRelatedTopicsSection(topic) : ""}
+`;
+  } catch (error) {
+    return `# Error Loading Documentation\n\nCould not load documentation for topic "${topic}". Error: ${error}`;
+  }
+}
+
+async function loadProviderDocs(provider: string): Promise<string> {
+  const files = providerToFiles[provider] || providerToFiles["postgresql"];
+  
+  try {
+    return loadDocs(files);
+  } catch (error) {
+    return `Could not load provider documentation: ${error}`;
+  }
+}
+
+async function loadPatternDocs(patterns: string[]): Promise<string> {
+  if (patterns.length === 0) return "";
+  
+  const allFiles = new Set<string>();
+  for (const pattern of patterns) {
+    const files = patternToFiles[pattern];
+    if (files) {
+      files.forEach(f => allFiles.add(f));
+    }
+  }
+  
+  if (allFiles.size === 0) return "";
+  
+  try {
+    return loadDocs(Array.from(allFiles));
+  } catch (error) {
+    return `Could not load pattern documentation: ${error}`;
+  }
 }
 
 function determineProvider(
@@ -176,460 +304,111 @@ function determinePatterns(requirements: string[]): string[] {
   return patterns;
 }
 
-function getProviderInfo(provider: string) {
-  const providers: Record<string, {
-    name: string;
-    reasoning: string;
-    packages: string;
-    appsettings: string;
-    programCs: string;
-    entityConfig: string;
-    dbContext: string;
-  }> = {
+function getProviderSummary(provider: string): { name: string; reasoning: string } {
+  const providers: Record<string, { name: string; reasoning: string }> = {
     sqlserver: {
       name: "SQL Server with Entity Framework Core",
-      reasoning: "Enterprise-grade relational database with excellent .NET integration. Best for Windows environments and Azure deployments.",
-      packages: `<PackageReference Include="Mvp24Hours.Core" Version="9.*" />
-<PackageReference Include="Mvp24Hours.Infrastructure.Data.EFCore" Version="9.*" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.*" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*" />`,
-      appsettings: `{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=MyDb;User Id=sa;Password=YourPassword;TrustServerCertificate=True;"
-  }
-}`,
-      programCs: `// In Program.cs or ServiceBuilderExtensions.cs
-using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Extensions;
-
-services.AddDbContext<MyDbContext>(options =>
-    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-
-services.AddMvp24HoursDbContext<MyDbContext>();
-services.AddMvp24HoursRepository(options => options.MaxQtyByQueryPage = 100);`,
-      entityConfig: `using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
-{
-    public void Configure(EntityTypeBuilder<Customer> builder)
-    {
-        builder.ToTable("Customers");
-        builder.HasKey(x => x.Id);
-        
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(100);
-            
-        builder.Property(x => x.Email)
-            .HasMaxLength(255);
-            
-        builder.HasIndex(x => x.Email)
-            .IsUnique();
-    }
-}`,
-      dbContext: `using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Infrastructure.Data.EFCore;
-
-public class MyDbContext : Mvp24HoursContext
-{
-    public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
-
-    public DbSet<Customer> Customers { get; set; }
-    public DbSet<Order> Orders { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyDbContext).Assembly);
-    }
-}`,
+      reasoning: "Enterprise-grade relational database with excellent .NET integration. Best for Windows environments and Azure deployments. Supports ACID transactions, complex queries, and relationships.",
     },
     postgresql: {
       name: "PostgreSQL with Entity Framework Core",
-      reasoning: "Open-source, highly performant relational database. Excellent for complex queries and JSON support. Cost-effective in cloud.",
-      packages: `<PackageReference Include="Mvp24Hours.Core" Version="9.*" />
-<PackageReference Include="Mvp24Hours.Infrastructure.Data.EFCore" Version="9.*" />
-<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.*" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*" />`,
-      appsettings: `{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=mydb;Username=postgres;Password=YourPassword"
-  }
-}`,
-      programCs: `// In Program.cs or ServiceBuilderExtensions.cs
-using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Extensions;
-
-services.AddDbContext<MyDbContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-
-services.AddMvp24HoursDbContext<MyDbContext>();
-services.AddMvp24HoursRepository(options => options.MaxQtyByQueryPage = 100);`,
-      entityConfig: `using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
-{
-    public void Configure(EntityTypeBuilder<Customer> builder)
-    {
-        builder.ToTable("customers"); // PostgreSQL prefers lowercase
-        builder.HasKey(x => x.Id);
-        
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(100);
-            
-        // PostgreSQL JSON column
-        builder.Property(x => x.Metadata)
-            .HasColumnType("jsonb");
-    }
-}`,
-      dbContext: `using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Infrastructure.Data.EFCore;
-
-public class MyDbContext : Mvp24HoursContext
-{
-    public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
-
-    public DbSet<Customer> Customers { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyDbContext).Assembly);
-        
-        // Use snake_case naming convention (PostgreSQL standard)
-        // modelBuilder.UseSnakeCaseNamingConvention();
-    }
-}`,
+      reasoning: "Open-source, highly performant relational database. Excellent for complex queries, JSON support, and full-text search. Cost-effective in cloud environments and supports advanced features like JSONB columns.",
     },
     mysql: {
       name: "MySQL with Entity Framework Core",
-      reasoning: "Popular open-source database with wide hosting support. Good for web applications with moderate requirements.",
-      packages: `<PackageReference Include="Mvp24Hours.Core" Version="9.*" />
-<PackageReference Include="Mvp24Hours.Infrastructure.Data.EFCore" Version="9.*" />
-<PackageReference Include="MySql.EntityFrameworkCore" Version="8.*" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*" />`,
-      appsettings: `{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=mydb;User=root;Password=YourPassword;"
-  }
-}`,
-      programCs: `// In Program.cs or ServiceBuilderExtensions.cs
-using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Extensions;
-
-services.AddDbContext<MyDbContext>(options =>
-    options.UseMySQL(configuration.GetConnectionString("DefaultConnection")));
-
-services.AddMvp24HoursDbContext<MyDbContext>();
-services.AddMvp24HoursRepository(options => options.MaxQtyByQueryPage = 100);`,
-      entityConfig: `using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
-{
-    public void Configure(EntityTypeBuilder<Customer> builder)
-    {
-        builder.ToTable("Customers");
-        builder.HasKey(x => x.Id);
-        
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4");
-    }
-}`,
-      dbContext: `using Microsoft.EntityFrameworkCore;
-using Mvp24Hours.Infrastructure.Data.EFCore;
-
-public class MyDbContext : Mvp24HoursContext
-{
-    public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
-
-    public DbSet<Customer> Customers { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyDbContext).Assembly);
-    }
-}`,
+      reasoning: "Popular open-source database with wide hosting support. Good for web applications with moderate requirements and cost-sensitive deployments.",
     },
     mongodb: {
       name: "MongoDB",
-      reasoning: "Document database ideal for flexible schemas and horizontal scaling. Great for content management and real-time analytics.",
-      packages: `<PackageReference Include="Mvp24Hours.Core" Version="9.*" />
-<PackageReference Include="Mvp24Hours.Infrastructure.Data.MongoDb" Version="9.*" />
-<PackageReference Include="MongoDB.Driver" Version="2.*" />`,
-      appsettings: `{
-  "MongoDb": {
-    "ConnectionString": "mongodb://localhost:27017",
-    "Database": "mydb"
-  }
-}`,
-      programCs: `// In Program.cs or ServiceBuilderExtensions.cs
-using Mvp24Hours.Extensions;
-using Mvp24Hours.Infrastructure.Data.MongoDb;
-
-// Configure MongoDB options
-services.Configure<MongoDbOptions>(configuration.GetSection("MongoDb"));
-
-// Add Mvp24Hours MongoDB
-services.AddMvp24HoursMongoDb();
-services.AddMvp24HoursRepository();`,
-      entityConfig: `using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using Mvp24Hours.Core.Entities;
-
-public class Customer : EntityBase<string>
-{
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public override string Id { get; set; }
-
-    [BsonElement("name")]
-    public string Name { get; set; }
-
-    [BsonElement("email")]
-    public string Email { get; set; }
-
-    [BsonElement("metadata")]
-    public BsonDocument Metadata { get; set; }
-}`,
-      dbContext: `// MongoDB doesn't use DbContext, but you can create a collection registry
-using MongoDB.Driver;
-
-public interface IMongoCollections
-{
-    IMongoCollection<Customer> Customers { get; }
-    IMongoCollection<Order> Orders { get; }
-}
-
-public class MongoCollections : IMongoCollections
-{
-    private readonly IMongoDatabase _database;
-
-    public MongoCollections(IMongoDatabase database)
-    {
-        _database = database;
-    }
-
-    public IMongoCollection<Customer> Customers => 
-        _database.GetCollection<Customer>("customers");
-    
-    public IMongoCollection<Order> Orders => 
-        _database.GetCollection<Order>("orders");
-}`,
+      reasoning: "Document database ideal for flexible schemas and horizontal scaling. Great for content management, real-time analytics, and applications with evolving data models.",
     },
     redis: {
       name: "Redis",
-      reasoning: "In-memory data store ideal for caching, sessions, and real-time data. Use as a secondary store alongside a primary database.",
-      packages: `<PackageReference Include="Mvp24Hours.Core" Version="9.*" />
-<PackageReference Include="Mvp24Hours.Infrastructure.Caching.Redis" Version="9.*" />
-<PackageReference Include="StackExchange.Redis" Version="2.*" />
-<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.*" />`,
-      appsettings: `{
-  "Redis": {
-    "Configuration": "localhost:6379",
-    "InstanceName": "myapp_"
-  }
-}`,
-      programCs: `// In Program.cs or ServiceBuilderExtensions.cs
-using Mvp24Hours.Extensions;
-
-// Add Redis distributed cache
-services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = configuration["Redis:Configuration"];
-    options.InstanceName = configuration["Redis:InstanceName"];
-});
-
-// Add Mvp24Hours caching
-services.AddMvp24HoursCaching();`,
-      entityConfig: `// Redis stores key-value pairs, typically serialized as JSON
-// Use for caching entities from your primary database
-
-public static class CacheKeys
-{
-    public static string Customer(Guid id) => $"customer:{id}";
-    public static string CustomerList(int page) => $"customers:page:{page}";
-}`,
-      dbContext: `// Redis cache service wrapper
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
-
-public class RedisCacheService
-{
-    private readonly IDistributedCache _cache;
-    private readonly DistributedCacheEntryOptions _defaultOptions;
-
-    public RedisCacheService(IDistributedCache cache)
-    {
-        _cache = cache;
-        _defaultOptions = new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
-            SlidingExpiration = TimeSpan.FromMinutes(10)
-        };
-    }
-
-    public async Task<T?> GetAsync<T>(string key)
-    {
-        var data = await _cache.GetStringAsync(key);
-        return data is null ? default : JsonSerializer.Deserialize<T>(data);
-    }
-
-    public async Task SetAsync<T>(string key, T value, DistributedCacheEntryOptions? options = null)
-    {
-        var data = JsonSerializer.Serialize(value);
-        await _cache.SetStringAsync(key, data, options ?? _defaultOptions);
-    }
-
-    public async Task RemoveAsync(string key)
-    {
-        await _cache.RemoveAsync(key);
-    }
-}`,
+      reasoning: "In-memory data store ideal for caching, sessions, and real-time data. Use as a secondary store alongside a primary database for high-performance scenarios.",
     },
   };
 
   return providers[provider] || providers["postgresql"];
 }
 
-function getPatternDocs(patterns: string[]): string {
-  const sections: string[] = [];
+function getQuickReference(): string {
+  return `## Quick Reference - Mvp24Hours Interfaces
 
-  if (patterns.includes("repository")) {
-    sections.push(`## Repository Pattern
+### Repository Interfaces (\`Mvp24Hours.Core.Contract.Data\`)
 
-\`\`\`csharp
-// Using Mvp24Hours built-in repository
-public class CustomerController : ControllerBase
-{
-    private readonly IUnitOfWorkAsync _uow;
+| Interface | Description |
+|-----------|-------------|
+| \`IRepository<TEntity>\` | Synchronous repository for CRUD operations |
+| \`IRepositoryAsync<TEntity>\` | Asynchronous repository for CRUD operations |
+| \`IUnitOfWork\` | Synchronous Unit of Work for transaction management |
+| \`IUnitOfWorkAsync\` | Asynchronous Unit of Work for transaction management |
 
-    public CustomerController(IUnitOfWorkAsync uow) => _uow = uow;
+### Entity Interfaces (\`Mvp24Hours.Core.Entities\`)
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var repo = _uow.GetRepository<Customer>();
-        
-        // Paging
-        var result = await repo.ToBusinessPagingAsync(page: 1, limit: 10);
-        
-        // With filter expression
-        var filtered = await repo.GetByAsync(x => x.Active);
-        
-        return Ok(result);
-    }
-}
-\`\`\`
-`);
-  }
+| Class/Interface | Description |
+|-----------------|-------------|
+| \`IEntityBase\` | Base interface for all entities |
+| \`EntityBase<TKey>\` | Base entity class with typed ID |
+| \`EntityBase\` | Base entity class with int ID |
+| \`IEntityDateLog\` | Interface for date-based audit (Created, Modified, Removed) |
+| \`IEntityLog<TUserKey>\` | Interface for full audit with user tracking |
+| \`EntityBaseLog<TKey, TUserKey>\` | Base entity with full audit support |
 
-  if (patterns.includes("unit-of-work")) {
-    sections.push(`## Unit of Work Pattern
+### Business Result (\`Mvp24Hours.Core.Contract.ValueObjects.Logic\`)
 
-\`\`\`csharp
-// Transaction management with Unit of Work
-public async Task<IActionResult> CreateOrder(OrderDto dto)
-{
-    var customerRepo = _uow.GetRepository<Customer>();
-    var orderRepo = _uow.GetRepository<Order>();
+| Interface | Description |
+|-----------|-------------|
+| \`IBusinessResult<T>\` | Wraps operation result with success/error info |
+| \`IPagingResult<T>\` | Wraps paginated result with metadata |
 
-    // All operations in a single transaction
-    var customer = await customerRepo.GetByIdAsync(dto.CustomerId);
-    if (customer is null) return NotFound();
+### DbContext (\`Mvp24Hours.Infrastructure.Data.EFCore\`)
 
-    var order = new Order { CustomerId = customer.Id, Total = dto.Total };
-    await orderRepo.AddAsync(order);
+| Class | Description |
+|-------|-------------|
+| \`Mvp24HoursContext\` | Base DbContext with logging support |
+| \`Mvp24HoursContextAsync\` | Async-optimized DbContext |
 
-    customer.OrderCount++;
-    await customerRepo.ModifyAsync(customer);
-
-    // Commit transaction
-    await _uow.SaveChangesAsync();
-
-    return Created($"/orders/{order.Id}", order);
-}
-\`\`\`
-`);
-  }
-
-  if (patterns.includes("specification")) {
-    sections.push(`## Specification Pattern
+### Extension Methods
 
 \`\`\`csharp
-using Mvp24Hours.Core.Contract.Domain;
-using System.Linq.Expressions;
+// DI Registration
+services.AddMvp24HoursDbContext<TContext>();           // Register DbContext
+services.AddMvp24HoursRepository();                     // Sync repository
+services.AddMvp24HoursRepositoryAsync();               // Async repository
 
-// Define specification
-public class ActiveCustomersSpec : ISpecificationQuery<Customer>
-{
-    private readonly string? _nameFilter;
+// MongoDB
+services.AddMvp24HoursDbContext(options => { ... });   // Configure MongoDB
+services.AddMvp24HoursRepositoryMongoDb();             // MongoDB repository
 
-    public ActiveCustomersSpec(string? nameFilter = null)
-    {
-        _nameFilter = nameFilter;
-    }
-
-    public Expression<Func<Customer, bool>> IsSatisfiedByExpression =>
-        customer => customer.Active &&
-            (string.IsNullOrEmpty(_nameFilter) || customer.Name.Contains(_nameFilter));
+// Redis
+services.AddMvp24HoursCaching();                       // Redis caching
+services.AddMvp24HoursCachingRedis(connectionString);  // With connection string
+\`\`\`
+`;
 }
 
-// Usage
-var spec = new ActiveCustomersSpec(filter.Name);
-var result = await repo.ToBusinessPagingAsync(spec.IsSatisfiedByExpression, page, limit);
-\`\`\`
-`);
-  }
+function getRelatedTopicsSection(currentTopic: string): string {
+  const related = relatedTopics[currentTopic] || [];
+  
+  if (related.length === 0) return "";
 
-  if (patterns.includes("dapper") || patterns.includes("hybrid")) {
-    sections.push(`## Hybrid Approach (EF Core + Dapper)
+  const topicDescriptions: Record<string, string> = {
+    overview: "Database patterns overview for AI agents",
+    relational: "SQL Server, PostgreSQL, MySQL configuration with EF Core",
+    nosql: "MongoDB and Redis configuration",
+    repository: "Repository pattern implementation and usage",
+    "unit-of-work": "Unit of Work pattern for transaction management",
+    entity: "Entity implementation with audit support",
+    context: "DbContext implementation and configuration",
+    service: "Service layer using repository pattern",
+    "efcore-advanced": "Advanced EF Core features: interceptors, bulk operations, multi-tenancy",
+    "mongodb-advanced": "Advanced MongoDB features: GridFS, Change Streams, geospatial queries",
+  };
 
-\`\`\`csharp
-using Dapper;
-using Microsoft.EntityFrameworkCore;
+  return `## Related Topics
 
-// Use EF Core for writes, Dapper for complex reads
-public class CustomerRepository
-{
-    private readonly MyDbContext _context;
+Use \`mvp24h_database_advisor({ topic: "..." })\` to explore:
 
-    public CustomerRepository(MyDbContext context) => _context = context;
-
-    // EF Core for writes (transactions, change tracking)
-    public async Task AddAsync(Customer customer)
-    {
-        await _context.Customers.AddAsync(customer);
-        await _context.SaveChangesAsync();
-    }
-
-    // Dapper for optimized reads
-    public async Task<IEnumerable<CustomerSummaryDto>> GetSummaryAsync()
-    {
-        var connection = _context.Database.GetDbConnection();
-        
-        return await connection.QueryAsync<CustomerSummaryDto>(@"
-            SELECT 
-                c.Id, c.Name, COUNT(o.Id) as OrderCount, SUM(o.Total) as TotalSpent
-            FROM Customers c
-            LEFT JOIN Orders o ON o.CustomerId = c.Id
-            WHERE c.Active = 1
-            GROUP BY c.Id, c.Name
-            ORDER BY TotalSpent DESC
-        ");
-    }
-}
-\`\`\`
-`);
-  }
-
-  return sections.length > 0 
-    ? `## Recommended Patterns\n\n${sections.join("\n")}`
-    : "";
+${related.map(t => `- **${t}**: ${topicDescriptions[t] || t}`).join("\n")}
+`;
 }

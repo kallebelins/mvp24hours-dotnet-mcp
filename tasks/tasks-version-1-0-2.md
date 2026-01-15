@@ -19,23 +19,23 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.1 Atualizar `database-advisor.ts`
 **Arquivo:** `src/tools/database-advisor.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
-- [ ] Adicionar novos topics ao schema enum:
-  - [ ] `entity` → `database/use-entity.md`
-  - [ ] `context` → `database/use-context.md`
-  - [ ] `service` → `database/use-service.md`
-  - [ ] `efcore-advanced` → `database/efcore-advanced.md`
-  - [ ] `mongodb-advanced` → `database/mongodb-advanced.md`
-- [ ] Criar mapeamento `topicToFiles` para carregar docs reais:
-  - [ ] `relational` → `database/relational.md`
-  - [ ] `nosql` → `database/nosql.md`
-  - [ ] `repository` → `database/use-repository.md`
-  - [ ] `unit-of-work` → `database/use-unitofwork.md`
-- [ ] Substituir conteúdo hardcoded por `loadDocs()`
-- [ ] Adicionar Quick Reference com interfaces corretas
-- [ ] Adicionar seção de Related Topics
+- [x] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
+- [x] Adicionar novos topics ao schema enum:
+  - [x] `entity` → `database/use-entity.md`
+  - [x] `context` → `database/use-context.md`
+  - [x] `service` → `database/use-service.md`
+  - [x] `efcore-advanced` → `database/efcore-advanced.md`
+  - [x] `mongodb-advanced` → `database/mongodb-advanced.md`
+- [x] Criar mapeamento `topicToFiles` para carregar docs reais:
+  - [x] `relational` → `database/relational.md`
+  - [x] `nosql` → `database/nosql.md`
+  - [x] `repository` → `database/use-repository.md`
+  - [x] `unit-of-work` → `database/use-unitofwork.md`
+- [x] Substituir conteúdo hardcoded por `loadDocs()`
+- [x] Adicionar Quick Reference com interfaces corretas
+- [x] Adicionar seção de Related Topics
 
 ### 1.2 Atualizar `observability-setup.ts`
 **Arquivo:** `src/tools/observability-setup.ts`
