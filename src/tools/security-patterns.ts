@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Security Patterns Tool
  * 
  * Provides security patterns and best practices for .NET applications.
@@ -765,6 +765,23 @@ public async Task<IActionResult> Upload(IFormFile file) { }
 
     "secrets-management": `# Secrets Management
 
+## Overview
+
+Mvp24Hours.Infrastructure provides built-in support for secure secrets management with:
+- Azure Key Vault integration
+- AWS Secrets Manager integration  
+- User Secrets for development
+- Environment variables
+- Secure configuration loading
+
+**Required Package:**
+\`\`\`bash
+dotnet add package Mvp24Hours.Infrastructure
+# Includes: Azure.Security.KeyVault.Secrets 4.x, AWSSDK.SecretsManager 4.x
+\`\`\`
+
+---
+
 ## User Secrets (Development)
 
 \`\`\`bash
@@ -774,6 +791,8 @@ dotnet user-secrets init
 # Set secrets
 dotnet user-secrets set "Database:Password" "secret123"
 dotnet user-secrets set "Jwt:Key" "your-secret-key"
+dotnet user-secrets set "Azure:KeyVaultUri" "https://myvault.vault.azure.net/"
+dotnet user-secrets set "AWS:SecretName" "prod/myapp/credentials"
 
 # List secrets
 dotnet user-secrets list
@@ -782,24 +801,273 @@ dotnet user-secrets list
 dotnet user-secrets remove "Database:Password"
 \`\`\`
 
+---
+
 ## Azure Key Vault
 
+### Basic Setup
+
 \`\`\`csharp
+// Required packages (included in Mvp24Hours.Infrastructure)
+// Azure.Identity
+// Azure.Security.KeyVault.Secrets
+// Azure.Extensions.AspNetCore.Configuration.Secrets
+
 // Program.cs
-var keyVaultUri = new Uri(builder.Configuration["KeyVault:Uri"]!);
+var keyVaultUri = new Uri(builder.Configuration["Azure:KeyVaultUri"]!);
 
 builder.Configuration.AddAzureKeyVault(
     keyVaultUri,
     new DefaultAzureCredential());
+\`\`\`
 
-// Or with specific credential
+### With Specific Credentials
+
+\`\`\`csharp
+// Using Service Principal (Client Credentials)
 builder.Configuration.AddAzureKeyVault(
     keyVaultUri,
     new ClientSecretCredential(
+        builder.Configuration["Azure:TenantId"],
+        builder.Configuration["Azure:ClientId"],
+        builder.Configuration["Azure:ClientSecret"]));
+
+// Using Managed Identity (recommended for Azure-hosted apps)
+builder.Configuration.AddAzureKeyVault(
+    keyVaultUri,
+    new ManagedIdentityCredential());
+
+// Using certificate
+builder.Configuration.AddAzureKeyVault(
+    keyVaultUri,
+    new ClientCertificateCredential(
         tenantId,
         clientId,
-        clientSecret));
+        certificate));
 \`\`\`
+
+### Direct Secret Client Usage
+
+\`\`\`csharp
+// Register SecretClient for direct access
+builder.Services.AddSingleton(sp =>
+{
+    var uri = new Uri(builder.Configuration["Azure:KeyVaultUri"]!);
+    return new SecretClient(uri, new DefaultAzureCredential());
+});
+
+// Usage in service
+public class MyService
+{
+    private readonly SecretClient _secretClient;
+
+    public MyService(SecretClient secretClient)
+    {
+        _secretClient = secretClient;
+    }
+
+    public async Task<string> GetSecretAsync(string secretName)
+    {
+        var secret = await _secretClient.GetSecretAsync(secretName);
+        return secret.Value.Value;
+    }
+
+    public async Task SetSecretAsync(string secretName, string value)
+    {
+        await _secretClient.SetSecretAsync(secretName, value);
+    }
+}
+\`\`\`
+
+### Key Vault with Caching
+
+\`\`\`csharp
+// Cache secrets to reduce Key Vault calls
+builder.Services.AddSingleton<ISecretProvider>(sp =>
+{
+    var secretClient = sp.GetRequiredService<SecretClient>();
+    var cache = sp.GetRequiredService<IMemoryCache>();
+    return new CachedSecretProvider(secretClient, cache, TimeSpan.FromMinutes(5));
+});
+
+public class CachedSecretProvider : ISecretProvider
+{
+    private readonly SecretClient _client;
+    private readonly IMemoryCache _cache;
+    private readonly TimeSpan _cacheDuration;
+
+    public CachedSecretProvider(SecretClient client, IMemoryCache cache, TimeSpan cacheDuration)
+    {
+        _client = client;
+        _cache = cache;
+        _cacheDuration = cacheDuration;
+    }
+
+    public async Task<string?> GetSecretAsync(string secretName)
+    {
+        return await _cache.GetOrCreateAsync(
+            $"secret:{secretName}",
+            async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = _cacheDuration;
+                var secret = await _client.GetSecretAsync(secretName);
+                return secret.Value.Value;
+            });
+    }
+}
+\`\`\`
+
+---
+
+## AWS Secrets Manager
+
+### Basic Setup
+
+\`\`\`csharp
+// Required packages (included in Mvp24Hours.Infrastructure)
+// AWSSDK.SecretsManager
+
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
+
+// Program.cs - Register AWS Secrets Manager
+builder.Services.AddSingleton<IAmazonSecretsManager>(sp =>
+{
+    return new AmazonSecretsManagerClient(Amazon.RegionEndpoint.USEast1);
+});
+\`\`\`
+
+### Secret Provider Service
+
+\`\`\`csharp
+public interface IAwsSecretProvider
+{
+    Task<string?> GetSecretAsync(string secretName);
+    Task<T?> GetSecretAsync<T>(string secretName) where T : class;
+}
+
+public class AwsSecretProvider : IAwsSecretProvider
+{
+    private readonly IAmazonSecretsManager _secretsManager;
+    private readonly ILogger<AwsSecretProvider> _logger;
+
+    public AwsSecretProvider(
+        IAmazonSecretsManager secretsManager,
+        ILogger<AwsSecretProvider> logger)
+    {
+        _secretsManager = secretsManager;
+        _logger = logger;
+    }
+
+    public async Task<string?> GetSecretAsync(string secretName)
+    {
+        try
+        {
+            var request = new GetSecretValueRequest
+            {
+                SecretId = secretName,
+                VersionStage = "AWSCURRENT"
+            };
+
+            var response = await _secretsManager.GetSecretValueAsync(request);
+
+            // Secret can be string or binary
+            if (response.SecretString != null)
+            {
+                return response.SecretString;
+            }
+
+            // Handle binary secret
+            using var reader = new StreamReader(response.SecretBinary);
+            return await reader.ReadToEndAsync();
+        }
+        catch (ResourceNotFoundException)
+        {
+            _logger.LogWarning("Secret {SecretName} not found", secretName);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving secret {SecretName}", secretName);
+            throw;
+        }
+    }
+
+    public async Task<T?> GetSecretAsync<T>(string secretName) where T : class
+    {
+        var secretJson = await GetSecretAsync(secretName);
+        if (string.IsNullOrEmpty(secretJson))
+            return null;
+
+        return JsonSerializer.Deserialize<T>(secretJson);
+    }
+}
+
+// Registration
+builder.Services.AddSingleton<IAwsSecretProvider, AwsSecretProvider>();
+\`\`\`
+
+### AWS Configuration Provider
+
+\`\`\`csharp
+// Load secrets into configuration at startup
+public static class AwsSecretsExtensions
+{
+    public static IConfigurationBuilder AddAwsSecrets(
+        this IConfigurationBuilder builder,
+        string secretName,
+        Amazon.RegionEndpoint region)
+    {
+        var client = new AmazonSecretsManagerClient(region);
+        
+        var request = new GetSecretValueRequest
+        {
+            SecretId = secretName
+        };
+
+        try
+        {
+            var response = client.GetSecretValueAsync(request).Result;
+            var secrets = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                response.SecretString);
+
+            if (secrets != null)
+            {
+                builder.AddInMemoryCollection(secrets!);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log and continue - secrets may not be required in dev
+            Console.WriteLine($"AWS Secrets Manager error: {ex.Message}");
+        }
+
+        return builder;
+    }
+}
+
+// Usage in Program.cs
+builder.Configuration.AddAwsSecrets(
+    "prod/myapp/credentials",
+    Amazon.RegionEndpoint.USEast1);
+\`\`\`
+
+### AWS with IAM Role (EC2/ECS/Lambda)
+
+\`\`\`csharp
+// When running on AWS, use IAM role credentials (no explicit credentials needed)
+builder.Services.AddSingleton<IAmazonSecretsManager>(sp =>
+{
+    // Automatically uses IAM role attached to EC2/ECS/Lambda
+    return new AmazonSecretsManagerClient();
+});
+
+// For local development, configure AWS credentials
+// ~/.aws/credentials or environment variables
+// AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
+\`\`\`
+
+---
 
 ## Environment Variables
 
@@ -816,7 +1084,12 @@ var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
 // Docker/Kubernetes
 // docker run -e DB_PASSWORD=secret myapp
+
+// Kubernetes Secret
+// kubectl create secret generic myapp-secrets --from-literal=DB_PASSWORD=secret
 \`\`\`
+
+---
 
 ## Options Pattern with Secrets
 
@@ -845,13 +1118,15 @@ builder.Services.Configure<DatabaseOptions>(
   }
 }
 
-// User secrets / Key Vault (sensitive)
+// User secrets / Key Vault / AWS Secrets Manager (sensitive)
 {
   "Database": {
     "Password": "secret123"
   }
 }
 \`\`\`
+
+---
 
 ## Secret Rotation
 
@@ -887,6 +1162,8 @@ public class RotatingSecretService
 }
 \`\`\`
 
+---
+
 ## Secure Configuration Loading
 
 \`\`\`csharp
@@ -901,11 +1178,41 @@ builder.Configuration
 
 if (builder.Environment.IsProduction())
 {
-    builder.Configuration.AddAzureKeyVault(
-        new Uri(builder.Configuration["KeyVault:Uri"]!),
-        new DefaultAzureCredential());
+    // Choose your cloud provider
+    var cloudProvider = builder.Configuration["CloudProvider"];
+
+    if (cloudProvider == "Azure")
+    {
+        builder.Configuration.AddAzureKeyVault(
+            new Uri(builder.Configuration["Azure:KeyVaultUri"]!),
+            new DefaultAzureCredential());
+    }
+    else if (cloudProvider == "AWS")
+    {
+        builder.Configuration.AddAwsSecrets(
+            builder.Configuration["AWS:SecretName"]!,
+            Amazon.RegionEndpoint.GetBySystemName(
+                builder.Configuration["AWS:Region"] ?? "us-east-1"));
+    }
 }
 \`\`\`
+
+---
+
+## Quick Reference
+
+| Provider | Package | Best For |
+|----------|---------|----------|
+| User Secrets | Microsoft.Extensions.Configuration.UserSecrets | Development |
+| Azure Key Vault | Azure.Security.KeyVault.Secrets | Azure-hosted apps |
+| AWS Secrets Manager | AWSSDK.SecretsManager | AWS-hosted apps |
+| Environment Variables | Built-in | Containers, CI/CD |
+
+## Related Topics
+
+- Use \`mvp24h_infrastructure_guide({ topic: "infrastructure-base" })\` for HTTP resilience
+- Use \`mvp24h_containerization_patterns({ topic: "configuration" })\` for Kubernetes secrets
+- Use \`mvp24h_security_patterns({ topic: "data-protection" })\` for encryption
 `,
   };
 
