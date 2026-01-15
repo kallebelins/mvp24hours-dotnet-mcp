@@ -305,18 +305,20 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 4.1 Carregar Documentação Real
 **Arquivo:** `src/tools/architecture-advisor.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Importar `loadDoc`, `loadDocs`, `docExists`
-- [ ] Carregar `ai-context/decision-matrix.md` para matriz de decisão
-- [ ] Carregar `ai-context/architecture-templates.md` para overview
-- [ ] Substituir `getTemplateInfo()` hardcoded por docs reais quando disponíveis
+- [x] Importar `loadDoc`, `loadDocs`, `docExists`
+- [x] Carregar `ai-context/decision-matrix.md` para matriz de decisão
+- [x] Carregar `ai-context/architecture-templates.md` para overview
+- [x] Substituir `getTemplateInfo()` hardcoded por docs reais quando disponíveis
 
 ### 4.2 Melhorar Recomendações
-- [ ] Após recomendar arquitetura, incluir lista de recursos necessários
-- [ ] Adicionar comando sugerido: `mvp24h_build_context({ architecture: "X", resources: [...] })`
-- [ ] Incluir pacotes NuGet da documentação real
-- [ ] Adicionar seção "Implementation Checklist"
+**Status:** ✅ Concluído
+
+- [x] Após recomendar arquitetura, incluir lista de recursos necessários
+- [x] Adicionar comando sugerido: `mvp24h_build_context({ architecture: "X", resources: [...] })`
+- [x] Incluir pacotes NuGet da documentação real
+- [x] Adicionar seção "Implementation Checklist"
 
 ---
 
@@ -440,10 +442,10 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 | `ai-decision-matrix.md` | `ai-implementation` | ✅ |
 | `ai-implementation-index.md` | `ai-implementation` | ✅ |
 | `api-versioning-patterns.md` | `reference-guide` | ✅ |
-| `architecture-templates.md` | `architecture-advisor` | ⏳ Carregar |
+| `architecture-templates.md` | `architecture-advisor` | ✅ |
 | `containerization-patterns.md` | `containerization-patterns` | ✅ |
 | `database-patterns.md` | `database-advisor` | ⏳ Carregar |
-| `decision-matrix.md` | `architecture-advisor` | ⏳ Carregar |
+| `decision-matrix.md` | `architecture-advisor` | ✅ |
 | `error-handling-patterns.md` | `reference-guide` | ✅ |
 | `home.md` | `get-started` | ✅ |
 | `messaging-patterns.md` | `messaging-patterns` | ✅ |
