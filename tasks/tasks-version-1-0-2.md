@@ -82,25 +82,41 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.4 Atualizar `modernization-guide.ts`
 **Arquivo:** `src/tools/modernization-guide.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Adicionar features faltantes ao schema enum:
-  - [ ] `channels`
-  - [ ] `dotnet9-features`
-  - [ ] `migration-guide`
-  - [ ] `native-openapi`
-  - [ ] `options-configuration`
-  - [ ] `problem-details`
-  - [ ] `source-generators`
-- [ ] Criar/atualizar mapeamento para arquivos:
-  - [ ] `channels` → `modernization/channels.md`
-  - [ ] `dotnet9-features` → `modernization/dotnet9-features.md`
-  - [ ] `migration-guide` → `modernization/migration-guide.md`
-  - [ ] `native-openapi` → `modernization/native-openapi.md`
-  - [ ] `options-configuration` → `modernization/options-configuration.md`
-  - [ ] `problem-details` → `modernization/problem-details.md`
-  - [ ] `source-generators` → `modernization/source-generators.md`
-- [ ] Verificar se tool já usa `loadDocs()`, se não, implementar
+- [x] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
+- [x] Adicionar features faltantes ao schema enum:
+  - [x] `channels` (já existia)
+  - [x] `dotnet9-features`
+  - [x] `migration-guide`
+  - [x] `native-openapi` (já existia)
+  - [x] `options-configuration`
+  - [x] `problem-details` (já existia)
+  - [x] `source-generators` (já existia)
+- [x] Adicionar nova categoria `communication` para Channels
+- [x] Criar mapeamento `featureToFiles` para carregar docs reais:
+  - [x] `http-resilience` → `modernization/http-resilience.md`
+  - [x] `generic-resilience` → `modernization/generic-resilience.md`
+  - [x] `rate-limiting` → `modernization/rate-limiting.md`
+  - [x] `hybrid-cache` → `modernization/hybrid-cache.md`
+  - [x] `output-caching` → `modernization/output-caching.md`
+  - [x] `time-provider` → `modernization/time-provider.md`
+  - [x] `periodic-timer` → `modernization/periodic-timer.md`
+  - [x] `keyed-services` → `modernization/keyed-services.md`
+  - [x] `options-configuration` → `modernization/options-configuration.md`
+  - [x] `problem-details` → `modernization/problem-details.md`
+  - [x] `minimal-apis` → `modernization/minimal-apis.md`
+  - [x] `native-openapi` → `modernization/native-openapi.md`
+  - [x] `source-generators` → `modernization/source-generators.md`
+  - [x] `aspire` → `modernization/aspire.md`
+  - [x] `channels` → `modernization/channels.md`
+  - [x] `dotnet9-features` → `modernization/dotnet9-features.md`
+  - [x] `migration-guide` → `modernization/migration-guide.md`
+- [x] Criar mapeamento `categoryToFiles` para categorias
+- [x] Substituir todo conteúdo hardcoded por `loadDocs()`
+- [x] Adicionar `relatedTopics` para cross-referencing
+- [x] Adicionar Quick Reference para features principais
+- [x] Adicionar seção de Related Topics
 
 ### 1.5 Atualizar `infrastructure-guide.ts`
 **Arquivo:** `src/tools/infrastructure-guide.ts`
