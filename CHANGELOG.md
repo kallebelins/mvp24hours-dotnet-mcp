@@ -8,8 +8,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project structure
+- Placeholder for future changes
 
+---
+
+## [1.0.2] - 2026-01-15
+
+### Added
+
+#### New Tool: `mvp24h_build_context`
+- Complete context builder for implementing .NET applications
+- Combines architecture template with selected resources (database, caching, observability, messaging, security, testing, containerization)
+- Supports 9 architecture patterns: CQRS, Event-Driven, Clean Architecture, DDD, Hexagonal, Minimal API, Simple N-Layers, Complex N-Layers, Microservices
+- Includes implementation checklist and related tools suggestions
+- Key interfaces reference for each architecture
+
+#### New Documentation
+- `docs/ai-context/quick-reference.md` - Complete interface reference for Mvp24Hours
+- `docs/ai-context/nuget-packages.md` - NuGet packages guide with installation and configuration
+- `docs/infrastructure-base.md` - Mvp24Hours.Infrastructure base package documentation
+- `docs/caching-redis.md` - Redis caching with HybridCache L2 layer
+
+### Changed
+
+#### Tools Now Load Real Documentation
+All tools now load documentation from `.md` files instead of hardcoded content:
+
+- **database-advisor.ts**
+  - Added topics: `entity`, `context`, `service`, `efcore-advanced`, `mongodb-advanced`
+  - Loads from `docs/database/*.md`
+  - Quick Reference with correct interfaces
+  - Related Topics section
+
+- **observability-setup.ts**
+  - Added topics: `audit`, `cqrs-tracing`, `cqrs-telemetry`
+  - Loads from `docs/observability/*.md` and `docs/cqrs/observability/*.md`
+  - Exporter-specific configuration
+
+- **cqrs-guide.ts**
+  - Added topics: `mediator`, `concepts-comparison`, `integration-rabbitmq`, `audit`, `cqrs-tracing`, `cqrs-telemetry`
+  - 28 total topics available
+  - Related Topics for cross-referencing
+
+- **modernization-guide.ts**
+  - Added features: `channels`, `dotnet9-features`, `migration-guide`, `options-configuration`
+  - Category-based organization (resilience, caching, time, di, api, communication, cloud, migration)
+  - Loads from `docs/modernization/*.md`
+
+- **infrastructure-guide.ts**
+  - Added topics: `infrastructure-base`, `caching-redis`, `caching-advanced`, `cronjob-advanced`, `cronjob-observability`, `cronjob-resilience`
+  - Complete coverage of all infrastructure packages
+
+- **core-patterns.ts**
+  - Added topic: `infrastructure-abstractions`
+  - Loads from `docs/core/*.md`
+
+- **reference-guide.ts**
+  - Added topics: `api-versioning`, `error-handling`, `telemetry`
+  - Loads from `docs/*.md` and `docs/ai-context/*.md`
+
+- **architecture-advisor.ts**
+  - Loads real documentation from `ai-context/decision-matrix.md` and `ai-context/architecture-templates.md`
+  - Implementation checklist for each architecture
+  - Suggested `mvp24h_build_context` command
+
+- **get-template.ts**
+  - Added `include_context` flag (default: true)
+  - Loads related documentation for each template:
+    - CQRS: commands, queries, behaviors, repository, unit-of-work
+    - DDD: value-objects, entity-interfaces, domain-events, strongly-typed-ids, guard-clauses
+    - Event-Driven: domain-events, integration-events, messaging-patterns, inbox-outbox
+    - Microservices: messaging, integration-events, circuit-breaker, retry, containerization
+  - Suggested next steps per template
+
+- **security-patterns.ts**
+  - Expanded `secrets-management` topic
+  - Added AWS Secrets Manager support
+  - Enhanced Azure Key Vault with Managed Identity, Certificates, Caching
+
+### Fixed
+- Interfaces now use correct Mvp24Hours namespaces (`IMediatorCommand`, `IRepository`, etc.)
+- Consistent documentation across all tools
+- No conflicting information between tools
+
+### Documentation
+- Cobertura completa dos pacotes NuGet:
+  - `Mvp24Hours.Core` (Abstrações, entidades, value objects, guards)
+  - `Mvp24Hours.Infrastructure` (Infraestrutura base, HTTP, gerenciamento de segredos)
+  - `Mvp24Hours.Application` (Serviços de aplicação, validação, transações)
+  - `Mvp24Hours.Infrastructure.Caching` (Caching distribuído com HybridCache)
+  - `Mvp24Hours.Infrastructure.Caching.Redis` (Extensões de cache específicas para Redis)
+  - `Mvp24Hours.Infrastructure.Cqrs` (Padrão CQRS/Mediator)
+  - `Mvp24Hours.Infrastructure.CronJob` (Agendamento de jobs em background)
+  - `Mvp24Hours.Infrastructure.Data.EFCore` (Repositório com Entity Framework Core)
+  - `Mvp24Hours.Infrastructure.Data.MongoDb` (Repositório para MongoDB)
+  - `Mvp24Hours.Infrastructure.Pipe` (Padrão de pipeline)
+  - `Mvp24Hours.Infrastructure.RabbitMQ` (Mensageria com RabbitMQ)
+  - `Mvp24Hours.WebAPI` (Utilitários para Web API e Swagger)
 ---
 
 ## [1.0.0] - 2024-01-13
@@ -60,11 +155,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 1.0.2 | 2026-01-15 | Real documentation loading, new build-context tool, complete NuGet coverage |
 | 1.0.0 | 2024-01-13 | Initial release with core MCP tools |
 
 ---
 
 ## Upgrade Guide
+
+### Upgrading to 1.0.2
+
+This version is fully backward compatible with 1.0.0. The main changes are:
+
+1. **New tool available**: Use `mvp24h_build_context` to get complete context for your architecture
+2. **Enhanced documentation**: All tools now return more comprehensive documentation
+3. **New topics**: Several tools have new topics available - check the tool descriptions
+
+No breaking changes. Simply update your package:
+
+```bash
+npm update mvp24hours-dotnet-mcp
+```
 
 ### Upgrading to 1.0.0
 
@@ -80,5 +190,6 @@ Thanks to all contributors who helped make this release possible!
 
 ---
 
-[Unreleased]: https://github.com/kallebelins/mvp24hours-dotnet-mcp/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/kallebelins/mvp24hours-dotnet-mcp/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/kallebelins/mvp24hours-dotnet-mcp/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/kallebelins/mvp24hours-dotnet-mcp/releases/tag/v1.0.0
