@@ -1,6 +1,6 @@
 {
   "name": "mvp24hours-dotnet-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP Server for Mvp24Hours .NET Framework - Intelligent documentation routing for AI agents",
   "type": "module",
   "main": "dist/index.js",
