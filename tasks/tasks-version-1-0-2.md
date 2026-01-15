@@ -60,24 +60,25 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.3 Atualizar `cqrs-guide.ts`
 **Arquivo:** `src/tools/cqrs-guide.ts`
-**Status:** ✅ Parcialmente feito (já usa loadDocs)
+**Status:** ✅ Concluído
 
-- [ ] Adicionar topics faltantes ao schema enum:
-  - [ ] `mediator`
-  - [ ] `concepts-comparison`
-  - [ ] `integration-rabbitmq`
-  - [ ] `audit`
-  - [ ] `cqrs-tracing`
-  - [ ] `cqrs-telemetry`
-- [ ] Adicionar mapeamentos em `topicToFiles`:
-  - [ ] `mediator` → `cqrs/mediator.md`
-  - [ ] `concepts-comparison` → `cqrs/concepts-comparison.md`
-  - [ ] `integration-rabbitmq` → `cqrs/integration-rabbitmq.md`
-  - [ ] `audit` → `cqrs/observability/audit.md`
-  - [ ] `cqrs-tracing` → `cqrs/observability/tracing.md`
-  - [ ] `cqrs-telemetry` → `cqrs/observability/telemetry.md`
-- [ ] Atualizar `relatedTopics` com novos topics
-- [ ] Atualizar `getTopicDescription()` com descrições dos novos topics
+- [x] Adicionar topics faltantes ao schema enum:
+  - [x] `mediator`
+  - [x] `concepts-comparison`
+  - [x] `integration-rabbitmq`
+  - [x] `audit`
+  - [x] `cqrs-tracing`
+  - [x] `cqrs-telemetry`
+- [x] Adicionar mapeamentos em `topicToFiles`:
+  - [x] `mediator` → `cqrs/mediator.md`
+  - [x] `concepts-comparison` → `cqrs/concepts-comparison.md`
+  - [x] `integration-rabbitmq` → `cqrs/integration-rabbitmq.md` + `ai-context/messaging-patterns.md`
+  - [x] `audit` → `cqrs/observability/audit.md`
+  - [x] `cqrs-tracing` → `cqrs/observability/tracing.md`
+  - [x] `cqrs-telemetry` → `cqrs/observability/telemetry.md`
+- [x] Atualizar `relatedTopics` com novos topics
+- [x] Atualizar `getTopicDescription()` com descrições dos novos topics
+- [x] Atualizar `getAvailableTopicsMessage()` com novos topics na listagem
 
 ### 1.4 Atualizar `modernization-guide.ts`
 **Arquivo:** `src/tools/modernization-guide.ts`

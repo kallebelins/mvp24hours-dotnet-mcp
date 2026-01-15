@@ -34,8 +34,14 @@ export const cqrsGuideSchema = {
         "integration-repository",
         "integration-unitofwork",
         "integration-caching",
+        "integration-rabbitmq",
         "specifications",
-        "complete-example"
+        "complete-example",
+        "mediator",
+        "concepts-comparison",
+        "audit",
+        "cqrs-tracing",
+        "cqrs-telemetry"
       ],
       description: "CQRS topic to get documentation for",
     },
@@ -70,6 +76,7 @@ const topicToFiles: Record<string, string[]> = {
   "integration-repository": ["cqrs/integration-repository.md", "database/use-repository.md"],
   "integration-unitofwork": ["cqrs/integration-unitofwork.md", "database/use-unitofwork.md"],
   "integration-caching": ["cqrs/integration-caching.md"],
+  "integration-rabbitmq": ["cqrs/integration-rabbitmq.md", "ai-context/messaging-patterns.md"],
   "specifications": ["cqrs/specifications.md"],
   "complete-example": [
     "cqrs/home.md",
@@ -77,7 +84,12 @@ const topicToFiles: Record<string, string[]> = {
     "cqrs/queries.md",
     "cqrs/integration-repository.md",
     "cqrs/behaviors.md"
-  ]
+  ],
+  "mediator": ["cqrs/mediator.md"],
+  "concepts-comparison": ["cqrs/concepts-comparison.md"],
+  "audit": ["cqrs/observability/audit.md"],
+  "cqrs-tracing": ["cqrs/observability/tracing.md"],
+  "cqrs-telemetry": ["cqrs/observability/telemetry.md"]
 };
 
 // Related topics for each main topic
@@ -85,13 +97,20 @@ const relatedTopics: Record<string, string[]> = {
   "commands": ["validation", "behaviors", "integration-repository"],
   "queries": ["specifications", "integration-caching", "integration-repository"],
   "notifications": ["domain-events", "integration-events"],
-  "domain-events": ["event-sourcing", "notifications"],
-  "behaviors": ["validation", "resilience", "integration-caching"],
+  "domain-events": ["event-sourcing", "notifications", "integration-events"],
+  "behaviors": ["validation", "resilience", "integration-caching", "audit"],
   "validation": ["behaviors", "commands"],
-  "saga": ["resilience", "commands"],
+  "saga": ["resilience", "commands", "integration-events"],
   "event-sourcing": ["domain-events", "saga"],
   "resilience": ["behaviors", "saga"],
-  "overview": ["getting-started", "commands", "queries"]
+  "overview": ["getting-started", "commands", "queries", "mediator"],
+  "mediator": ["commands", "queries", "notifications", "concepts-comparison"],
+  "concepts-comparison": ["mediator", "domain-events", "integration-events"],
+  "integration-rabbitmq": ["integration-events", "resilience", "saga"],
+  "integration-events": ["domain-events", "integration-rabbitmq", "saga"],
+  "audit": ["behaviors", "cqrs-tracing", "cqrs-telemetry"],
+  "cqrs-tracing": ["audit", "cqrs-telemetry", "behaviors"],
+  "cqrs-telemetry": ["audit", "cqrs-tracing", "behaviors"]
 };
 
 export async function cqrsGuide(args: unknown): Promise<string> {
@@ -141,8 +160,14 @@ function getTopicDescription(topic: string): string {
     "integration-repository": "Using Repository with CQRS",
     "integration-unitofwork": "Using Unit of Work with CQRS",
     "integration-caching": "Caching queries results",
+    "integration-rabbitmq": "RabbitMQ integration for messaging",
     "specifications": "Specification pattern for queries",
-    "complete-example": "Full CQRS implementation example"
+    "complete-example": "Full CQRS implementation example",
+    "mediator": "IMediator interface and core concepts",
+    "concepts-comparison": "Compare CQRS vs Event Sourcing vs Mediator",
+    "audit": "Audit trail and logging for CQRS operations",
+    "cqrs-tracing": "Distributed tracing for CQRS commands/queries",
+    "cqrs-telemetry": "Telemetry and metrics for CQRS"
   };
   return descriptions[topic] || topic;
 }
@@ -311,9 +336,11 @@ function getAvailableTopicsMessage(invalidTopic: string): string {
 ### Core Concepts
 - \`overview\` - CQRS/Mediator architecture overview
 - \`getting-started\` - Initial setup and configuration
+- \`mediator\` - IMediator interface and core concepts
 - \`commands\` - Creating commands and handlers
 - \`queries\` - Creating queries and handlers
 - \`notifications\` - In-process notifications
+- \`concepts-comparison\` - Compare CQRS vs Event Sourcing vs Mediator
 
 ### Events
 - \`domain-events\` - Domain events for state changes
@@ -334,7 +361,13 @@ function getAvailableTopicsMessage(invalidTopic: string): string {
 - \`integration-repository\` - Using Repository with CQRS
 - \`integration-unitofwork\` - Using Unit of Work
 - \`integration-caching\` - Caching query results
+- \`integration-rabbitmq\` - RabbitMQ messaging integration
 - \`specifications\` - Specification pattern
+
+### Observability
+- \`audit\` - Audit trail and logging for CQRS operations
+- \`cqrs-tracing\` - Distributed tracing for commands/queries
+- \`cqrs-telemetry\` - Telemetry and metrics for CQRS
 
 ### Reference
 - \`best-practices\` - CQRS best practices
@@ -346,7 +379,8 @@ function getAvailableTopicsMessage(invalidTopic: string): string {
 
 \`\`\`
 mvp24h_cqrs_guide({ topic: "commands" })
-mvp24h_cqrs_guide({ topic: "integration-repository" })
-mvp24h_cqrs_guide({ topic: "complete-example" })
+mvp24h_cqrs_guide({ topic: "mediator" })
+mvp24h_cqrs_guide({ topic: "integration-rabbitmq" })
+mvp24h_cqrs_guide({ topic: "audit" })
 \`\`\``;
 }
