@@ -1,8 +1,10 @@
 /**
  * Reference Guide Tool
- * 
+ *
  * Provides documentation for Mapping, Validation, Specification, and other reference topics.
  */
+
+import { loadDoc, loadDocs, docExists } from "../utils/doc-loader.js";
 
 export const referenceGuideSchema = {
   type: "object" as const,
@@ -16,6 +18,9 @@ export const referenceGuideSchema = {
         "specification",
         "documentation",
         "migration",
+        "api-versioning",
+        "error-handling",
+        "telemetry",
       ],
       description: "Reference topic to get documentation for",
     },
@@ -27,6 +32,80 @@ interface ReferenceGuideArgs {
   topic?: string;
 }
 
+/**
+ * Mapping of topics to documentation files
+ */
+const topicToFiles: Record<string, string[]> = {
+  overview: ["home.md"],
+  mapping: ["mapping.md"],
+  validation: ["validation.md"],
+  specification: ["specification.md"],
+  documentation: ["documentation.md"],
+  migration: ["migration.md"],
+  "api-versioning": ["ai-context/api-versioning-patterns.md"],
+  "error-handling": ["ai-context/error-handling-patterns.md"],
+  telemetry: ["telemetry.md"],
+};
+
+/**
+ * Related topics for cross-referencing
+ */
+const relatedTopics: Record<string, string[]> = {
+  mapping: [
+    "cqrs/commands.md",
+    "database/use-repository.md",
+    "application-services.md",
+  ],
+  validation: [
+    "cqrs/validation-behavior.md",
+    "error-handling",
+    "application-services.md",
+  ],
+  specification: [
+    "cqrs/specifications.md",
+    "database/use-repository.md",
+  ],
+  documentation: [
+    "modernization/native-openapi.md",
+    "api-versioning",
+  ],
+  migration: [
+    "observability/migration.md",
+    "modernization/migration-guide.md",
+    "cqrs/getting-started.md",
+  ],
+  "api-versioning": [
+    "documentation",
+    "error-handling",
+    "modernization/minimal-apis.md",
+  ],
+  "error-handling": [
+    "validation",
+    "modernization/problem-details.md",
+    "core/exceptions.md",
+    "cqrs/validation-behavior.md",
+  ],
+  telemetry: [
+    "observability/migration.md",
+    "observability/logging.md",
+    "observability/tracing.md",
+  ],
+};
+
+/**
+ * Topic descriptions for overview
+ */
+const topicDescriptions: Record<string, string> = {
+  mapping: "AutoMapper configuration and IMapFrom interface for object-to-object mapping",
+  validation: "FluentValidation patterns and DataAnnotations for data validation",
+  specification: "Specification pattern implementation for query composition",
+  documentation: "API documentation with Swagger and Native OpenAPI (.NET 9+)",
+  migration: "Migration guides from legacy to modern APIs and version upgrades",
+  "api-versioning": "API versioning patterns (URL, Query String, Header, Media Type)",
+  "error-handling": "Exception handling, ProblemDetails, and Result pattern with IBusinessResult",
+  telemetry: "Telemetry configuration (deprecated - migrate to ILogger and OpenTelemetry)",
+};
+
 export async function referenceGuide(args: unknown): Promise<string> {
   const { topic } = args as ReferenceGuideArgs;
 
@@ -37,868 +116,452 @@ export async function referenceGuide(args: unknown): Promise<string> {
   return getOverview();
 }
 
-function getOverview(): string {
+async function getOverview(): Promise<string> {
+  const topicList = Object.entries(topicDescriptions)
+    .map(([key, desc]) => `| \`${key}\` | ${desc} |`)
+    .join("\n");
+
   return `# Reference Guide
+
+## Overview
+
+The Reference Guide provides documentation for cross-cutting concerns and supporting patterns 
+used throughout Mvp24Hours applications. These patterns complement the core architecture 
+with mapping, validation, documentation, and error handling capabilities.
 
 ## Available Topics
 
 | Topic | Description |
 |-------|-------------|
-| \`mapping\` | AutoMapper configuration and usage |
-| \`validation\` | FluentValidation patterns |
-| \`specification\` | Specification pattern implementation |
-| \`documentation\` | XML documentation and Swagger |
-| \`migration\` | Database migrations with EF Core |
+${topicList}
 
 ## Quick Reference
 
 ### Mapping (AutoMapper)
-Object-to-object mapping between entities and DTOs.
-
-### Validation (FluentValidation)
-Declarative validation rules for DTOs and commands.
-
-### Specification
-Query specifications for complex filtering.
-
-Use \`mvp24h_reference_guide({ topic: "..." })\` for detailed documentation.
-`;
-}
-
-function getTopicDoc(topic: string): string {
-  const topics: Record<string, string> = {
-    mapping: `# AutoMapper Configuration
-
-## Installation
-
-\`\`\`bash
-dotnet add package AutoMapper
-dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection
-\`\`\`
-
-## Profile Definition
 
 \`\`\`csharp
-using AutoMapper;
-
-public class CustomerProfile : Profile
+// Define mapping in DTO
+public class CustomerDto : IMapFrom
 {
-    public CustomerProfile()
-    {
-        // Entity to DTO
-        CreateMap<Customer, CustomerDto>();
-        
-        // DTO to Entity
-        CreateMap<CreateCustomerDto, Customer>()
-            .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.Active, opt => opt.MapFrom(_ => true));
-        
-        // Update mapping (ignore nulls)
-        CreateMap<UpdateCustomerDto, Customer>()
-            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-    }
-}
-
-public class OrderProfile : Profile
-{
-    public OrderProfile()
-    {
-        CreateMap<Order, OrderDto>()
-            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer.Name))
-            .ForMember(dest => dest.ItemCount, opt => opt.MapFrom(src => src.Items.Count))
-            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Items.Sum(i => i.Price * i.Quantity)));
-
-        CreateMap<OrderItem, OrderItemDto>();
-    }
-}
-\`\`\`
-
-## Registration
-
-\`\`\`csharp
-// Program.cs
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
-
-// Or specify assemblies
-builder.Services.AddAutoMapper(
-    typeof(CustomerProfile).Assembly,
-    typeof(OrderProfile).Assembly
-);
-\`\`\`
-
-## Usage
-
-### In Services
-
-\`\`\`csharp
-public class CustomerService
-{
-    private readonly IMapper _mapper;
-    private readonly IUnitOfWorkAsync _uow;
-
-    public CustomerService(IMapper mapper, IUnitOfWorkAsync uow)
-    {
-        _mapper = mapper;
-        _uow = uow;
-    }
-
-    public async Task<CustomerDto> GetByIdAsync(Guid id)
-    {
-        var repo = _uow.GetRepository<Customer>();
-        var customer = await repo.GetByIdAsync(id);
-        return _mapper.Map<CustomerDto>(customer);
-    }
-
-    public async Task<CustomerDto> CreateAsync(CreateCustomerDto dto)
-    {
-        var customer = _mapper.Map<Customer>(dto);
-        
-        var repo = _uow.GetRepository<Customer>();
-        await repo.AddAsync(customer);
-        await _uow.SaveChangesAsync();
-        
-        return _mapper.Map<CustomerDto>(customer);
-    }
-
-    public async Task<CustomerDto> UpdateAsync(Guid id, UpdateCustomerDto dto)
-    {
-        var repo = _uow.GetRepository<Customer>();
-        var customer = await repo.GetByIdAsync(id);
-        
-        _mapper.Map(dto, customer); // Update existing entity
-        
-        await repo.ModifyAsync(customer);
-        await _uow.SaveChangesAsync();
-        
-        return _mapper.Map<CustomerDto>(customer);
-    }
-}
-\`\`\`
-
-### Paging Results
-
-\`\`\`csharp
-using Mvp24Hours.Extensions;
-
-public async Task<IPagingResult<CustomerDto>> GetAllAsync(int page, int limit)
-{
-    var repo = _uow.GetRepository<Customer>();
-    var result = await repo.ToBusinessPagingAsync(page, limit);
+    public int Id { get; set; }
+    public string Name { get; set; }
     
-    // Map paging result
-    return result.MapPagingTo<Customer, CustomerDto>(_mapper);
-}
-\`\`\`
-
-## Advanced Mappings
-
-### Value Resolver
-
-\`\`\`csharp
-public class FullNameResolver : IValueResolver<Customer, CustomerDto, string>
-{
-    public string Resolve(Customer source, CustomerDto destination, string destMember, ResolutionContext context)
-    {
-        return $"{source.FirstName} {source.LastName}";
-    }
-}
-
-// In profile
-CreateMap<Customer, CustomerDto>()
-    .ForMember(dest => dest.FullName, opt => opt.MapFrom<FullNameResolver>());
-\`\`\`
-
-### Type Converter
-
-\`\`\`csharp
-public class MoneyToDecimalConverter : ITypeConverter<Money, decimal>
-{
-    public decimal Convert(Money source, decimal destination, ResolutionContext context)
-    {
-        return source.Amount;
-    }
+    public void Mapping(Profile profile) 
+        => profile.CreateMap<Customer, CustomerDto>();
 }
 
 // Registration
-CreateMap<Money, decimal>().ConvertUsing<MoneyToDecimalConverter>();
-\`\`\`
-
-### Conditional Mapping
-
-\`\`\`csharp
-CreateMap<Order, OrderDto>()
-    .ForMember(dest => dest.ShippingAddress, opt => 
-        opt.Condition(src => src.Status != OrderStatus.Cancelled));
-\`\`\`
-`,
-
-    validation: `# FluentValidation
-
-## Installation
-
-\`\`\`bash
-dotnet add package FluentValidation
-dotnet add package FluentValidation.AspNetCore
-\`\`\`
-
-## Basic Validator
-
-\`\`\`csharp
-using FluentValidation;
-
-public class CreateCustomerValidator : AbstractValidator<CreateCustomerDto>
-{
-    public CreateCustomerValidator()
-    {
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Name is required")
-            .MinimumLength(2).WithMessage("Name must be at least 2 characters")
-            .MaximumLength(100).WithMessage("Name cannot exceed 100 characters");
-
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Invalid email format");
-
-        RuleFor(x => x.BirthDate)
-            .NotEmpty().WithMessage("Birth date is required")
-            .LessThan(DateTime.Today).WithMessage("Birth date must be in the past")
-            .Must(BeAtLeast18).WithMessage("Customer must be at least 18 years old");
-
-        RuleFor(x => x.Phone)
-            .Matches(@"^\\d{10,11}$").WithMessage("Invalid phone format")
-            .When(x => !string.IsNullOrEmpty(x.Phone));
-    }
-
-    private bool BeAtLeast18(DateTime birthDate)
-    {
-        return birthDate <= DateTime.Today.AddYears(-18);
-    }
-}
-\`\`\`
-
-## Async Validation
-
-\`\`\`csharp
-public class CreateCustomerValidator : AbstractValidator<CreateCustomerDto>
-{
-    private readonly IUnitOfWorkAsync _uow;
-
-    public CreateCustomerValidator(IUnitOfWorkAsync uow)
-    {
-        _uow = uow;
-
-        RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress()
-            .MustAsync(BeUniqueEmail).WithMessage("Email already exists");
-
-        RuleFor(x => x.Cpf)
-            .NotEmpty()
-            .Must(BeValidCpf).WithMessage("Invalid CPF")
-            .MustAsync(BeUniqueCpf).WithMessage("CPF already registered");
-    }
-
-    private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)
-    {
-        var repo = _uow.GetRepository<Customer>();
-        var exists = await repo.AnyAsync(c => c.Email == email, cancellationToken);
-        return !exists;
-    }
-
-    private bool BeValidCpf(string cpf)
-    {
-        // CPF validation logic
-        return CpfValidator.IsValid(cpf);
-    }
-
-    private async Task<bool> BeUniqueCpf(string cpf, CancellationToken cancellationToken)
-    {
-        var repo = _uow.GetRepository<Customer>();
-        return !await repo.AnyAsync(c => c.Cpf == cpf, cancellationToken);
-    }
-}
-\`\`\`
-
-## Nested Validation
-
-\`\`\`csharp
-public class CreateOrderValidator : AbstractValidator<CreateOrderDto>
-{
-    public CreateOrderValidator()
-    {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty().WithMessage("Customer is required");
-
-        RuleFor(x => x.Items)
-            .NotEmpty().WithMessage("Order must have at least one item");
-
-        RuleForEach(x => x.Items)
-            .SetValidator(new OrderItemValidator());
-
-        RuleFor(x => x.ShippingAddress)
-            .SetValidator(new AddressValidator())
-            .When(x => x.RequiresShipping);
-    }
-}
-
-public class OrderItemValidator : AbstractValidator<OrderItemDto>
-{
-    public OrderItemValidator()
-    {
-        RuleFor(x => x.ProductId)
-            .NotEmpty().WithMessage("Product is required");
-
-        RuleFor(x => x.Quantity)
-            .GreaterThan(0).WithMessage("Quantity must be greater than 0")
-            .LessThanOrEqualTo(100).WithMessage("Maximum quantity is 100");
-
-        RuleFor(x => x.Price)
-            .GreaterThan(0).WithMessage("Price must be greater than 0");
-    }
-}
-\`\`\`
-
-## Registration
-
-\`\`\`csharp
-// Program.cs
-
-// Register all validators from assembly
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-
-// Or register individually
-builder.Services.AddScoped<IValidator<CreateCustomerDto>, CreateCustomerValidator>();
-\`\`\`
-
-## Usage
-
-### Manual Validation
-
-\`\`\`csharp
-public class CustomerService
-{
-    private readonly IValidator<CreateCustomerDto> _validator;
-
-    public async Task<IBusinessResult<CustomerDto>> CreateAsync(CreateCustomerDto dto)
-    {
-        var validation = await _validator.ValidateAsync(dto);
-        
-        if (!validation.IsValid)
-        {
-            var errors = validation.Errors.Select(e => e.ErrorMessage);
-            return BusinessResult<CustomerDto>.Failure(errors);
-        }
-
-        // Continue with creation...
-    }
-}
-\`\`\`
-
-### Automatic Validation (ASP.NET Core)
-
-\`\`\`csharp
-// Program.cs
-builder.Services.AddFluentValidationAutoValidation();
-
-// Controller - validation happens automatically
-[HttpPost]
-public async Task<IActionResult> Create([FromBody] CreateCustomerDto dto)
-{
-    // If validation fails, returns 400 automatically
-    
-    var result = await _service.CreateAsync(dto);
-    return Ok(result);
-}
-\`\`\`
-
-## Custom Validators
-
-\`\`\`csharp
-public static class CustomValidators
-{
-    public static IRuleBuilderOptions<T, string> ValidCpf<T>(this IRuleBuilder<T, string> ruleBuilder)
-    {
-        return ruleBuilder
-            .Must(CpfValidator.IsValid)
-            .WithMessage("Invalid CPF");
-    }
-
-    public static IRuleBuilderOptions<T, string> ValidCnpj<T>(this IRuleBuilder<T, string> ruleBuilder)
-    {
-        return ruleBuilder
-            .Must(CnpjValidator.IsValid)
-            .WithMessage("Invalid CNPJ");
-    }
-}
+builder.Services.AddMvp24HoursMapService(Assembly.GetExecutingAssembly());
 
 // Usage
-RuleFor(x => x.Cpf).ValidCpf();
-RuleFor(x => x.Cnpj).ValidCnpj();
+var dto = _mapper.Map<CustomerDto>(customer);
+\`\`\`
+
+### Validation (FluentValidation)
+
+\`\`\`csharp
+public class CustomerValidator : AbstractValidator<Customer>
+{
+    public CustomerValidator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(100);
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress();
+    }
+}
+
+// With CQRS
+builder.Services.AddMvp24HoursCqrs(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.AddValidationBehavior(); // Automatic validation
+});
+\`\`\`
+
+### Error Handling (IBusinessResult)
+
+\`\`\`csharp
+using Mvp24Hours.Core.Contract.ValueObjects.Logic;
+using Mvp24Hours.Extensions;
+
+public async Task<IBusinessResult<CustomerDto>> GetByIdAsync(int id)
+{
+    var customer = await _repository.GetByIdAsync(id);
+    
+    if (customer == null)
+        return new CustomerDto().ToBusinessNotFound("Customer not found");
+    
+    return customer.ToDto().ToBusinessSuccess();
+}
+\`\`\`
+
+### API Versioning
+
+\`\`\`csharp
+// URL Path versioning (recommended)
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class CustomersController : ControllerBase { }
+
+// Configuration
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
+\`\`\`
+
+## Key NuGet Packages
+
+| Package | Description |
+|---------|-------------|
+| \`Mvp24Hours.Infrastructure\` | AutoMapper integration (IMapFrom) |
+| \`Mvp24Hours.WebAPI\` | Swagger/OpenAPI documentation |
+| \`FluentValidation\` | Validation rules |
+| \`Asp.Versioning.Mvc\` | API versioning |
+
+Use \`mvp24h_reference_guide({ topic: "..." })\` for detailed documentation on each topic.
+`;
+}
+
+async function getTopicDoc(topic: string): Promise<string> {
+  const files = topicToFiles[topic];
+
+  if (!files) {
+    const availableTopics = Object.keys(topicToFiles).join(", ");
+    return `Topic "${topic}" not found. Available topics: ${availableTopics}`;
+  }
+
+  // Load documentation from files
+  let docs: string;
+  try {
+    docs = await loadDocs(files);
+  } catch {
+    // Fallback for missing files
+    docs = `# ${topic.charAt(0).toUpperCase() + topic.slice(1)}\n\nDocumentation not yet available for this topic.`;
+  }
+
+  // Build related topics section
+  const related = relatedTopics[topic];
+  let relatedSection = "";
+  if (related && related.length > 0) {
+    const relatedList = related
+      .map((r) => {
+        if (r.includes("/")) {
+          // It's a file reference
+          return `- \`${r}\``;
+        }
+        // It's a topic reference
+        const desc = topicDescriptions[r] || "";
+        return `- \`mvp24h_reference_guide({ topic: "${r}" })\`${desc ? ` - ${desc}` : ""}`;
+      })
+      .join("\n");
+
+    relatedSection = `
+
+---
+
+## Related Topics
+
+${relatedList}
+`;
+  }
+
+  // Build quick reference based on topic
+  const quickRef = getQuickReference(topic);
+
+  return `${docs}${quickRef}${relatedSection}`;
+}
+
+function getQuickReference(topic: string): string {
+  const quickRefs: Record<string, string> = {
+    mapping: `
+
+---
+
+## Quick Reference
+
+| Interface | Description |
+|-----------|-------------|
+| \`IMapFrom\` | Define mapping with custom configuration |
+| \`IMapFrom<T>\` | Simple automatic mapping |
+| \`IMapper\` | AutoMapper injection interface |
+
+### Extension Methods
+
+| Method | Description |
+|--------|-------------|
+| \`MapIgnore()\` | Ignore a property in mapping |
+| \`MapProperty()\` | Map to a different property name |
+| \`MapBusinessTo()\` | Map IBusinessResult content |
+| \`MapPagingTo()\` | Map IPagingResult content |
+
+\`\`\`csharp
+// Registration
+builder.Services.AddMvp24HoursMapService(Assembly.GetExecutingAssembly());
+
+// Usage with IMapper
+var dto = _mapper.Map<CustomerDto>(entity);
+var entities = _mapper.Map<IEnumerable<Customer>>(dtos);
+_mapper.Map(updateDto, existingEntity); // Update existing
 \`\`\`
 `,
 
-    specification: `# Specification Pattern
+    validation: `
 
-## Overview
+---
 
-The Specification pattern encapsulates query logic for reuse.
+## Quick Reference
 
-## Basic Specification
+| Approach | Description |
+|----------|-------------|
+| FluentValidation | Declarative rules with AbstractValidator |
+| DataAnnotations | Attribute-based validation |
+| CQRS ValidationBehavior | Automatic pipeline validation |
+| IValidationService | Manual validation in services |
+
+### Common Rules
+
+| Rule | Description |
+|------|-------------|
+| \`NotEmpty()\` | Required field |
+| \`MaximumLength(n)\` | Max string length |
+| \`EmailAddress()\` | Email format |
+| \`GreaterThan(n)\` | Numeric comparison |
+| \`MustAsync()\` | Async custom validation |
+| \`SetValidator()\` | Nested object validation |
 
 \`\`\`csharp
-using Mvp24Hours.Core.Contract.Domain;
-using System.Linq.Expressions;
+// Register validators
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// Manual validation
+var errors = entity.TryValidate(validator);
+if (errors.AnySafe())
+    return errors.ToBusiness<int>();
+\`\`\`
+`,
+
+    specification: `
+
+---
+
+## Quick Reference
+
+| Interface | Description |
+|-----------|-------------|
+| \`ISpecificationQuery<T>\` | Query specification with expression |
+| \`Specification<T>\` | Base class with ToExpression() |
+
+### Operators
+
+| Operator | Description |
+|----------|-------------|
+| \`And<T, TSpec>()\` | Combine with AND |
+| \`Or<T, TSpec>()\` | Combine with OR |
+| \`Not<T, TSpec>()\` | Negate specification |
+
+\`\`\`csharp
+// Define specification
 public class ActiveCustomersSpec : ISpecificationQuery<Customer>
 {
     public Expression<Func<Customer, bool>> IsSatisfiedByExpression 
-        => customer => customer.Active && customer.Removed == null;
+        => x => x.Active && x.Removed == null;
 }
 
-public class CustomerByEmailSpec : ISpecificationQuery<Customer>
-{
-    private readonly string _email;
-
-    public CustomerByEmailSpec(string email)
-    {
-        _email = email.ToLowerInvariant();
-    }
-
-    public Expression<Func<Customer, bool>> IsSatisfiedByExpression 
-        => customer => customer.Email.ToLower() == _email;
-}
-\`\`\`
-
-## Filter Specification
-
-\`\`\`csharp
-public class CustomerFilterSpec : ISpecificationQuery<Customer>
-{
-    private readonly CustomerFilterDto _filter;
-
-    public CustomerFilterSpec(CustomerFilterDto filter)
-    {
-        _filter = filter;
-    }
-
-    public Expression<Func<Customer, bool>> IsSatisfiedByExpression
-    {
-        get
-        {
-            return customer =>
-                (string.IsNullOrEmpty(_filter.Name) || customer.Name.Contains(_filter.Name)) &&
-                (string.IsNullOrEmpty(_filter.Email) || customer.Email.Contains(_filter.Email)) &&
-                (!_filter.Active.HasValue || customer.Active == _filter.Active.Value) &&
-                (!_filter.CreatedFrom.HasValue || customer.Created >= _filter.CreatedFrom.Value) &&
-                (!_filter.CreatedTo.HasValue || customer.Created <= _filter.CreatedTo.Value);
-        }
-    }
-}
-\`\`\`
-
-## Ordered Specification
-
-\`\`\`csharp
-public class RecentCustomersSpec : ISpecificationQueryOrder<Customer>
-{
-    private readonly int _days;
-
-    public RecentCustomersSpec(int days = 30)
-    {
-        _days = days;
-    }
-
-    public Expression<Func<Customer, bool>> IsSatisfiedByExpression
-        => customer => customer.Created >= DateTime.UtcNow.AddDays(-_days);
-
-    public Func<IQueryable<Customer>, IOrderedQueryable<Customer>> OrderBy
-        => query => query.OrderByDescending(c => c.Created);
-}
-\`\`\`
-
-## Composite Specifications
-
-\`\`\`csharp
-public static class SpecificationExtensions
-{
-    public static ISpecificationQuery<T> And<T>(
-        this ISpecificationQuery<T> left,
-        ISpecificationQuery<T> right)
-    {
-        return new AndSpecification<T>(left, right);
-    }
-
-    public static ISpecificationQuery<T> Or<T>(
-        this ISpecificationQuery<T> left,
-        ISpecificationQuery<T> right)
-    {
-        return new OrSpecification<T>(left, right);
-    }
-
-    public static ISpecificationQuery<T> Not<T>(
-        this ISpecificationQuery<T> spec)
-    {
-        return new NotSpecification<T>(spec);
-    }
-}
-
-public class AndSpecification<T> : ISpecificationQuery<T>
-{
-    private readonly ISpecificationQuery<T> _left;
-    private readonly ISpecificationQuery<T> _right;
-
-    public AndSpecification(ISpecificationQuery<T> left, ISpecificationQuery<T> right)
-    {
-        _left = left;
-        _right = right;
-    }
-
-    public Expression<Func<T, bool>> IsSatisfiedByExpression
-    {
-        get
-        {
-            var leftExpr = _left.IsSatisfiedByExpression;
-            var rightExpr = _right.IsSatisfiedByExpression;
-
-            var parameter = Expression.Parameter(typeof(T));
-            var combined = Expression.AndAlso(
-                Expression.Invoke(leftExpr, parameter),
-                Expression.Invoke(rightExpr, parameter)
-            );
-
-            return Expression.Lambda<Func<T, bool>>(combined, parameter);
-        }
-    }
-}
-
-// Usage
-var spec = new ActiveCustomersSpec()
-    .And(new CustomerByEmailSpec("test@example.com"));
-\`\`\`
-
-## Usage with Repository
-
-\`\`\`csharp
-public class CustomerService
-{
-    private readonly IUnitOfWorkAsync _uow;
-    private readonly IMapper _mapper;
-
-    public async Task<IPagingResult<CustomerDto>> GetFilteredAsync(
-        CustomerFilterDto filter,
-        int page,
-        int limit)
-    {
-        var spec = new CustomerFilterSpec(filter);
-        var repo = _uow.GetRepository<Customer>();
-        
-        var result = await repo.ToBusinessPagingAsync(
-            spec.IsSatisfiedByExpression,
-            page,
-            limit
-        );
-
-        return result.MapPagingTo<Customer, CustomerDto>(_mapper);
-    }
-
-    public async Task<IEnumerable<CustomerDto>> GetRecentActiveAsync()
-    {
-        var spec = new RecentCustomersSpec(30)
-            .And(new ActiveCustomersSpec());
-
-        var repo = _uow.GetRepository<Customer>();
-        var customers = await repo.GetByAsync(spec.IsSatisfiedByExpression);
-
-        return _mapper.Map<IEnumerable<CustomerDto>>(customers);
-    }
-}
+// Compose specifications
+Expression<Func<Customer, bool>> filter = x => x.Active;
+filter = filter
+    .And<Customer, CustomerHasEmailSpec>()
+    .Not<Customer, CustomerIsBlockedSpec>();
 \`\`\`
 `,
 
-    documentation: `# API Documentation
+    documentation: `
 
-## XML Documentation
+---
 
-### Enable in .csproj
+## Quick Reference
 
-\`\`\`xml
-<PropertyGroup>
-  <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  <NoWarn>$(NoWarn);1591</NoWarn>
-</PropertyGroup>
-\`\`\`
+| Approach | Best For |
+|----------|----------|
+| Swashbuckle | .NET 8 and earlier |
+| Native OpenAPI | .NET 9+ (recommended) |
 
-### Document Controllers
+### Native OpenAPI Benefits
 
-\`\`\`csharp
-/// <summary>
-/// Customer management endpoints
-/// </summary>
-[ApiController]
-[Route("api/[controller]")]
-[Produces("application/json")]
-public class CustomersController : ControllerBase
-{
-    /// <summary>
-    /// Get all customers with pagination
-    /// </summary>
-    /// <param name="page">Page number (1-based)</param>
-    /// <param name="limit">Items per page (max 100)</param>
-    /// <returns>Paginated list of customers</returns>
-    /// <response code="200">Returns the list of customers</response>
-    [HttpGet]
-    [ProducesResponseType(typeof(IPagingResult<CustomerDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(int page = 1, int limit = 10)
-    {
-        // ...
-    }
-
-    /// <summary>
-    /// Get customer by ID
-    /// </summary>
-    /// <param name="id">Customer unique identifier</param>
-    /// <returns>Customer details</returns>
-    /// <response code="200">Returns the customer</response>
-    /// <response code="404">Customer not found</response>
-    [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        // ...
-    }
-
-    /// <summary>
-    /// Create a new customer
-    /// </summary>
-    /// <param name="dto">Customer creation data</param>
-    /// <returns>Created customer</returns>
-    /// <response code="201">Customer created successfully</response>
-    /// <response code="400">Invalid data</response>
-    /// <remarks>
-    /// Sample request:
-    /// 
-    ///     POST /api/customers
-    ///     {
-    ///         "name": "John Doe",
-    ///         "email": "john@example.com"
-    ///     }
-    /// 
-    /// </remarks>
-    [HttpPost]
-    [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateCustomerDto dto)
-    {
-        // ...
-    }
-}
-\`\`\`
-
-### Document DTOs
+| Feature | Native OpenAPI | Swashbuckle |
+|---------|---------------|-------------|
+| AOT Compatible | ✅ | ⚠️ Limited |
+| Package Size | ~50KB | ~500KB |
+| First-party Support | ✅ Microsoft | ❌ Third-party |
 
 \`\`\`csharp
-/// <summary>
-/// Customer data transfer object
-/// </summary>
-public class CustomerDto
+// .NET 9+ with Native OpenAPI
+builder.Services.AddMvp24HoursNativeOpenApi(options =>
 {
-    /// <summary>
-    /// Unique identifier
-    /// </summary>
-    /// <example>3fa85f64-5717-4562-b3fc-2c963f66afa6</example>
-    public Guid Id { get; set; }
-
-    /// <summary>
-    /// Customer full name
-    /// </summary>
-    /// <example>John Doe</example>
-    public string Name { get; set; }
-
-    /// <summary>
-    /// Customer email address
-    /// </summary>
-    /// <example>john@example.com</example>
-    public string Email { get; set; }
-
-    /// <summary>
-    /// Whether the customer is active
-    /// </summary>
-    /// <example>true</example>
-    public bool Active { get; set; }
-}
-\`\`\`
-
-## Swagger Configuration
-
-\`\`\`csharp
-// Program.cs
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "My API",
-        Version = "v1",
-        Description = "API for customer management",
-        Contact = new OpenApiContact
-        {
-            Name = "Support",
-            Email = "support@example.com"
-        }
-    });
-
-    // Include XML comments
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    options.IncludeXmlComments(xmlPath);
-
-    // Add security
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT token",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey
-    });
+    options.Title = "My API";
+    options.Version = "1.0.0";
+    options.EnableSwaggerUI = true;
 });
 
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+app.MapMvp24HoursNativeOpenApi();
+
+// Legacy Swashbuckle
+builder.Services.AddMvp24HoursSwagger("My API", version: "v1");
+\`\`\`
+`,
+
+    migration: `
+
+---
+
+## Quick Reference
+
+### Version Migration Summary
+
+| From | To | Key Changes |
+|------|-----|-------------|
+| v8.x | v9.0 | TelemetryHelper → ILogger, HttpPolicyHelper → Resilience |
+| v9.0 | v9.1 | CQRS, Observability, TimeProvider |
+
+### Deprecated APIs
+
+| Deprecated | Replacement |
+|------------|-------------|
+| \`TelemetryHelper\` | \`ILogger<T>\` |
+| \`HttpPolicyHelper\` | \`AddMvpResilience()\` |
+| \`MultiLevelCache\` | \`HybridCache\` |
+| \`ServiceProviderHelper\` | Dependency Injection |
+| \`AutoMapperHelper\` | \`IMapper\` injection |
+
+\`\`\`csharp
+// Recommended pattern for all migrations
+// 1. Use dependency injection
+// 2. Use modern .NET native APIs
+// 3. Follow CQRS for complex operations
+\`\`\`
+`,
+
+    "api-versioning": `
+
+---
+
+## Quick Reference
+
+| Strategy | Example | Use Case |
+|----------|---------|----------|
+| URL Path | \`/api/v1/customers\` | RESTful APIs (recommended) |
+| Query String | \`?api-version=1.0\` | Backward compatibility |
+| Header | \`X-API-Version: 1.0\` | Clean URLs |
+| Media Type | \`Accept: application/vnd.api.v1+json\` | Content negotiation |
+
+### Key Components
+
+| Component | Description |
+|-----------|-------------|
+| \`ApiVersionAttribute\` | Mark controller version |
+| \`ApiVersionReader\` | Read version from request |
+| \`IApiVersionDescriptionProvider\` | List available versions |
+
+\`\`\`csharp
+// Install package
+dotnet add package Asp.Versioning.Mvc
+
+// Configuration
+builder.Services.AddApiVersioning(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
-    options.RoutePrefix = string.Empty; // Serve at root
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
 });
 \`\`\`
 `,
 
-    migration: `# EF Core Migrations
+    "error-handling": `
 
-## Setup
+---
 
-\`\`\`bash
-# Install EF Core tools
-dotnet tool install --global dotnet-ef
+## Quick Reference
 
-# Add design package
-dotnet add package Microsoft.EntityFrameworkCore.Design
-\`\`\`
+| Layer | Strategy | Implementation |
+|-------|----------|----------------|
+| Domain | Domain Exceptions | Custom exception types |
+| Application | Result Pattern | \`IBusinessResult<T>\` |
+| API | ProblemDetails | RFC 7807 standard |
+| Global | Exception Middleware | Centralized handling |
 
-## Basic Commands
+### Exception Types
 
-\`\`\`bash
-# Create migration
-dotnet ef migrations add InitialCreate
+| Exception | HTTP Status | Use Case |
+|-----------|-------------|----------|
+| \`ValidationException\` | 400 | Input validation |
+| \`NotFoundException\` | 404 | Entity not found |
+| \`BusinessRuleException\` | 422 | Business rule violation |
+| \`ConcurrencyException\` | 409 | Optimistic locking conflict |
 
-# Apply migrations
-dotnet ef database update
+### IBusinessResult Extensions
 
-# Remove last migration (not applied)
-dotnet ef migrations remove
-
-# Generate SQL script
-dotnet ef migrations script
-\`\`\`
-
-## Migration in Code
-
-\`\`\`csharp
-using Microsoft.EntityFrameworkCore.Migrations;
-
-public partial class AddCustomerAddress : Migration
-{
-    protected override void Up(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.AddColumn<string>(
-            name: "Street",
-            table: "Customers",
-            type: "nvarchar(200)",
-            maxLength: 200,
-            nullable: true);
-
-        migrationBuilder.AddColumn<string>(
-            name: "City",
-            table: "Customers",
-            type: "nvarchar(100)",
-            maxLength: 100,
-            nullable: true);
-
-        migrationBuilder.CreateIndex(
-            name: "IX_Customers_City",
-            table: "Customers",
-            column: "City");
-    }
-
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.DropIndex(
-            name: "IX_Customers_City",
-            table: "Customers");
-
-        migrationBuilder.DropColumn(
-            name: "Street",
-            table: "Customers");
-
-        migrationBuilder.DropColumn(
-            name: "City",
-            table: "Customers");
-    }
-}
-\`\`\`
-
-## Auto-Migration on Startup
+| Method | Description |
+|--------|-------------|
+| \`ToBusinessSuccess()\` | Success result with data |
+| \`ToBusinessNotFound()\` | 404 result |
+| \`ToBusinessError()\` | Error result with message |
+| \`ToBusinessCreate()\` | 201 created result |
+| \`ToBusinessWithMessages()\` | Result with multiple messages |
 
 \`\`\`csharp
-// Program.cs (Development only!)
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-    await context.Database.MigrateAsync();
-}
-\`\`\`
+// Using IBusinessResult
+if (customer == null)
+    return new CustomerDto().ToBusinessNotFound("Customer not found");
 
-## Data Seeding
+return customer.ToDto().ToBusinessSuccess();
+\`\`\`
+`,
+
+    telemetry: `
+
+---
+
+## Quick Reference
+
+> ⚠️ **DEPRECATED**: TelemetryHelper is deprecated. Use ILogger<T> and OpenTelemetry instead.
+
+### Migration Path
+
+| Legacy | Modern |
+|--------|--------|
+| \`TelemetryHelper.Execute()\` | \`_logger.LogInformation()\` |
+| \`TelemetryLevels.Verbose\` | \`LogLevel.Debug\` |
+| \`TelemetryLevels.Error\` | \`LogLevel.Error\` |
+| \`AddMvp24HoursTelemetry()\` | \`AddLogging()\` / \`AddOpenTelemetry()\` |
 
 \`\`\`csharp
-public partial class SeedInitialData : Migration
+// Modern approach with ILogger
+private readonly ILogger<MyService> _logger;
+
+public MyService(ILogger<MyService> logger)
 {
-    protected override void Up(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.InsertData(
-            table: "Categories",
-            columns: new[] { "Id", "Name", "Active" },
-            values: new object[,]
-            {
-                { 1, "Electronics", true },
-                { 2, "Clothing", true },
-                { 3, "Books", true }
-            });
-    }
-
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.DeleteData(
-            table: "Categories",
-            keyColumn: "Id",
-            keyValues: new object[] { 1, 2, 3 });
-    }
+    _logger = logger;
 }
-\`\`\`
 
-## Best Practices
+public void DoWork(string token)
+{
+    _logger.LogDebug("Processing started. Token: {Token}", token);
+}
 
-1. **Never edit applied migrations**
-2. **Test migrations in staging before production**
-3. **Use idempotent scripts for production**
-4. **Keep migrations small and focused**
-5. **Include both Up and Down methods**
-
-\`\`\`bash
-# Generate idempotent script
-dotnet ef migrations script --idempotent -o migration.sql
+// High-performance logging with source generators
+[LoggerMessage(Level = LogLevel.Debug, Message = "Processing {Token}")]
+static partial void LogProcessing(ILogger logger, string token);
 \`\`\`
 `,
   };
 
-  return topics[topic] || `Topic "${topic}" not found. Available topics: ${Object.keys(topics).join(", ")}`;
+  return quickRefs[topic] || "";
 }

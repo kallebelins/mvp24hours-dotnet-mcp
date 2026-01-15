@@ -170,22 +170,27 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.7 Atualizar `reference-guide.ts`
 **Arquivo:** `src/tools/reference-guide.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Adicionar topics faltantes ao schema enum:
-  - [ ] `api-versioning`
-  - [ ] `error-handling`
-  - [ ] `telemetry`
-- [ ] Criar/atualizar mapeamento para arquivos:
-  - [ ] `api-versioning` → `ai-context/api-versioning-patterns.md`
-  - [ ] `error-handling` → `ai-context/error-handling-patterns.md`
-  - [ ] `telemetry` → `telemetry.md`
-- [ ] Verificar mapeamentos existentes:
-  - [ ] `mapping` → `mapping.md`
-  - [ ] `validation` → `validation.md`
-  - [ ] `specification` → `specification.md`
-  - [ ] `documentation` → `documentation.md`
-  - [ ] `migration` → `migration.md`
+- [x] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
+- [x] Adicionar topics faltantes ao schema enum:
+  - [x] `api-versioning`
+  - [x] `error-handling`
+  - [x] `telemetry`
+- [x] Criar mapeamento `topicToFiles` para carregar docs reais:
+  - [x] `overview` → `home.md`
+  - [x] `mapping` → `mapping.md`
+  - [x] `validation` → `validation.md`
+  - [x] `specification` → `specification.md`
+  - [x] `documentation` → `documentation.md`
+  - [x] `migration` → `migration.md`
+  - [x] `api-versioning` → `ai-context/api-versioning-patterns.md`
+  - [x] `error-handling` → `ai-context/error-handling-patterns.md`
+  - [x] `telemetry` → `telemetry.md`
+- [x] Criar `relatedTopics` para cross-referencing
+- [x] Criar `topicDescriptions` para overview
+- [x] Adicionar Quick Reference para cada topic
+- [x] Substituir todo conteúdo hardcoded por `loadDocs()`
 
 ---
 
@@ -416,12 +421,12 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 |---------|------------------|--------|
 | `ai-decision-matrix.md` | `ai-implementation` | ✅ |
 | `ai-implementation-index.md` | `ai-implementation` | ✅ |
-| `api-versioning-patterns.md` | `reference-guide` | ⏳ Adicionar |
+| `api-versioning-patterns.md` | `reference-guide` | ✅ |
 | `architecture-templates.md` | `architecture-advisor` | ⏳ Carregar |
 | `containerization-patterns.md` | `containerization-patterns` | ✅ |
 | `database-patterns.md` | `database-advisor` | ⏳ Carregar |
 | `decision-matrix.md` | `architecture-advisor` | ⏳ Carregar |
-| `error-handling-patterns.md` | `reference-guide` | ⏳ Adicionar |
+| `error-handling-patterns.md` | `reference-guide` | ✅ |
 | `home.md` | `get-started` | ✅ |
 | `messaging-patterns.md` | `messaging-patterns` | ✅ |
 | `modernization-patterns.md` | `modernization-guide` | ✅ |
@@ -544,7 +549,7 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 | `migration.md` | `reference-guide` | ✅ |
 | `pipeline.md` | `infrastructure-guide` | ✅ |
 | `specification.md` | `reference-guide` | ✅ |
-| `telemetry.md` | `reference-guide` | ⏳ Adicionar |
+| `telemetry.md` | `reference-guide` | ✅ |
 | `validation.md` | `reference-guide` | ✅ |
 | `webapi-advanced.md` | `infrastructure-guide` | ✅ |
 | `webapi.md` | `infrastructure-guide` | ✅ |
