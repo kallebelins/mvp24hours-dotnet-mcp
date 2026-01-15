@@ -120,25 +120,31 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 1.5 Atualizar `infrastructure-guide.ts`
 **Arquivo:** `src/tools/infrastructure-guide.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Adicionar topics faltantes ao schema enum:
-  - [ ] `caching-advanced`
-  - [ ] `cronjob-advanced`
-  - [ ] `cronjob-observability`
-  - [ ] `cronjob-resilience`
-- [ ] Criar/atualizar mapeamento para arquivos:
-  - [ ] `caching-advanced` → `caching-advanced.md`
-  - [ ] `cronjob-advanced` → `cronjob-advanced.md`
-  - [ ] `cronjob-observability` → `cronjob-observability.md`
-  - [ ] `cronjob-resilience` → `cronjob-resilience.md`
-- [ ] Verificar mapeamentos existentes:
-  - [ ] `pipeline` → `pipeline.md`
-  - [ ] `caching` → `caching-advanced.md` (básico)
-  - [ ] `webapi` → `webapi.md`
-  - [ ] `webapi-advanced` → `webapi-advanced.md`
-  - [ ] `cronjob` → `cronjob.md`
-  - [ ] `application-services` → `application-services.md`
+- [x] Importar `loadDoc`, `loadDocs`, `docExists` de `../utils/doc-loader.js`
+- [x] Adicionar topics faltantes ao schema enum:
+  - [x] `caching-advanced`
+  - [x] `cronjob-advanced`
+  - [x] `cronjob-observability`
+  - [x] `cronjob-resilience`
+- [x] Criar/atualizar mapeamento para arquivos:
+  - [x] `caching-advanced` → `caching-advanced.md`
+  - [x] `cronjob-advanced` → `cronjob-advanced.md`
+  - [x] `cronjob-observability` → `cronjob-observability.md`
+  - [x] `cronjob-resilience` → `cronjob-resilience.md`
+- [x] Verificar mapeamentos existentes:
+  - [x] `pipeline` → `pipeline.md`
+  - [x] `caching` → `caching-advanced.md` (básico)
+  - [x] `webapi` → `webapi.md`
+  - [x] `webapi-advanced` → `webapi-advanced.md`
+  - [x] `cronjob` → `cronjob.md`
+  - [x] `application-services` → `application-services.md`
+- [x] Criar mapeamento `topicToFiles` para carregar docs reais
+- [x] Adicionar `relatedTopics` para cross-referencing
+- [x] Adicionar Quick Reference para cada topic
+- [x] Atualizar overview com todos os topics disponíveis
+- [x] Substituir todo conteúdo hardcoded por `loadDoc()`
 
 ### 1.6 Atualizar `core-patterns.ts`
 **Arquivo:** `src/tools/core-patterns.ts`
@@ -521,10 +527,10 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 | `application-services.md` | `infrastructure-guide` | ✅ |
 | `broker-advanced.md` | `messaging-patterns` | ✅ |
 | `broker.md` | `messaging-patterns` | ✅ |
-| `caching-advanced.md` | `infrastructure-guide` | ⏳ Adicionar |
-| `cronjob-advanced.md` | `infrastructure-guide` | ⏳ Adicionar |
-| `cronjob-observability.md` | `infrastructure-guide` | ⏳ Adicionar |
-| `cronjob-resilience.md` | `infrastructure-guide` | ⏳ Adicionar |
+| `caching-advanced.md` | `infrastructure-guide` | ✅ |
+| `cronjob-advanced.md` | `infrastructure-guide` | ✅ |
+| `cronjob-observability.md` | `infrastructure-guide` | ✅ |
+| `cronjob-resilience.md` | `infrastructure-guide` | ✅ |
 | `cronjob.md` | `infrastructure-guide` | ✅ |
 | `documentation.md` | `reference-guide` | ✅ |
 | `getting-started.md` | `get-started` | ✅ |
