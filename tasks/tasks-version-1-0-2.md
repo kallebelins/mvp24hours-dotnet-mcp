@@ -258,28 +258,46 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 3.1 Adicionar Contexto Relacionado por Arquitetura
 **Arquivo:** `src/tools/get-template.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Criar mapeamento `templateContextMap` com docs relacionados por template
-- [ ] Para template `cqrs`, carregar também:
-  - [ ] `cqrs/commands.md`
-  - [ ] `cqrs/queries.md`
-  - [ ] `cqrs/behaviors.md`
-  - [ ] `database/use-repository.md`
-- [ ] Para template `event-driven`, carregar também:
-  - [ ] `cqrs/domain-events.md`
-  - [ ] `cqrs/integration-events.md`
-  - [ ] `ai-context/messaging-patterns.md`
-- [ ] Para template `ddd`, carregar também:
-  - [ ] `core/value-objects.md`
-  - [ ] `core/entity-interfaces.md`
-  - [ ] `cqrs/domain-events.md`
-- [ ] Para template `clean-architecture`, carregar também:
-  - [ ] `core/entity-interfaces.md`
-  - [ ] `cqrs/commands.md` (se usar CQRS)
-- [ ] Atualizar função `getTemplate()` para usar `loadDocs()` com contexto
-- [ ] Adicionar flag opcional `include_context: boolean` ao schema
-- [ ] Remover templates inline (fallback) quando possível
+- [x] Criar mapeamento `templateContextMap` com docs relacionados por template
+- [x] Para template `cqrs`, carregar também:
+  - [x] `cqrs/commands.md`
+  - [x] `cqrs/queries.md`
+  - [x] `cqrs/behaviors.md`
+  - [x] `database/use-repository.md`
+  - [x] `database/use-unitofwork.md`
+- [x] Para template `event-driven`, carregar também:
+  - [x] `cqrs/domain-events.md`
+  - [x] `cqrs/integration-events.md`
+  - [x] `ai-context/messaging-patterns.md`
+  - [x] `cqrs/resilience/inbox-outbox.md`
+- [x] Para template `ddd`, carregar também:
+  - [x] `core/value-objects.md`
+  - [x] `core/entity-interfaces.md`
+  - [x] `cqrs/domain-events.md`
+  - [x] `core/strongly-typed-ids.md`
+  - [x] `core/guard-clauses.md`
+- [x] Para template `clean-architecture`, carregar também:
+  - [x] `core/entity-interfaces.md`
+  - [x] `cqrs/commands.md`
+  - [x] `cqrs/queries.md`
+  - [x] `database/use-repository.md`
+- [x] Para template `hexagonal`, carregar também:
+  - [x] `core/entity-interfaces.md`
+  - [x] `core/infrastructure-abstractions.md`
+  - [x] `database/use-repository.md`
+  - [x] `cqrs/commands.md`
+- [x] Para template `microservices`, carregar também:
+  - [x] `ai-context/messaging-patterns.md`
+  - [x] `cqrs/integration-events.md`
+  - [x] `cqrs/resilience/circuit-breaker.md`
+  - [x] `cqrs/resilience/retry.md`
+  - [x] `ai-context/containerization-patterns.md`
+- [x] Atualizar função `getTemplate()` para usar `loadDocs()` com contexto
+- [x] Adicionar flag opcional `include_context: boolean` ao schema
+- [x] Adicionar seção "Suggested Next Steps" por template
+- [x] Manter templates inline (fallback) para casos onde doc não existe
 
 ---
 

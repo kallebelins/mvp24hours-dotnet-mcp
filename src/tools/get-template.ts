@@ -1,10 +1,10 @@
 /**
  * Get Template Tool
  * 
- * Retrieves a specific architecture template by name.
+ * Retrieves a specific architecture template by name with optional related context.
  */
 
-import { loadDoc, docExists } from "../utils/doc-loader.js";
+import { loadDoc, loadDocs, docExists } from "../utils/doc-loader.js";
 
 export const getTemplateSchema = {
   type: "object" as const,
@@ -17,16 +17,252 @@ AI (Semantic Kernel): sk-chat-completion, sk-plugins, sk-rag, sk-planners
 AI (SK Graph): skg-graph-executor, skg-react-agent, skg-chain-of-thought, skg-chatbot-memory, skg-multi-agent, skg-document-pipeline, skg-human-in-loop, skg-checkpointing, skg-streaming, skg-observability
 AI (Agent Framework): agent-framework-basic, agent-framework-workflows, agent-framework-multi-agent, agent-framework-middleware`,
     },
+    include_context: {
+      type: "boolean",
+      description: "Include related documentation context for the template (patterns, examples, best practices). Defaults to true for architecture templates.",
+    },
   },
   required: ["template_name"],
 };
 
 interface GetTemplateArgs {
   template_name: string;
+  include_context?: boolean;
+}
+
+/**
+ * Mapping of templates to related documentation files for comprehensive context
+ */
+const templateContextMap: Record<string, string[]> = {
+  // CQRS Template
+  "cqrs": [
+    "cqrs/commands.md",
+    "cqrs/queries.md",
+    "cqrs/behaviors.md",
+    "database/use-repository.md",
+    "database/use-unitofwork.md",
+  ],
+  
+  // Event-Driven Template
+  "event-driven": [
+    "cqrs/domain-events.md",
+    "cqrs/integration-events.md",
+    "ai-context/messaging-patterns.md",
+    "cqrs/resilience/inbox-outbox.md",
+  ],
+  
+  // DDD Template
+  "ddd": [
+    "core/value-objects.md",
+    "core/entity-interfaces.md",
+    "cqrs/domain-events.md",
+    "core/strongly-typed-ids.md",
+    "core/guard-clauses.md",
+  ],
+  
+  // Clean Architecture Template
+  "clean-architecture": [
+    "core/entity-interfaces.md",
+    "cqrs/commands.md",
+    "cqrs/queries.md",
+    "database/use-repository.md",
+  ],
+  
+  // Hexagonal Template
+  "hexagonal": [
+    "core/entity-interfaces.md",
+    "core/infrastructure-abstractions.md",
+    "database/use-repository.md",
+    "cqrs/commands.md",
+  ],
+  
+  // Microservices Template
+  "microservices": [
+    "ai-context/messaging-patterns.md",
+    "cqrs/integration-events.md",
+    "cqrs/resilience/circuit-breaker.md",
+    "cqrs/resilience/retry.md",
+    "ai-context/containerization-patterns.md",
+  ],
+  
+  // Simple N-Layers Template
+  "simple-nlayers": [
+    "database/use-repository.md",
+    "database/use-entity.md",
+    "database/use-context.md",
+  ],
+  
+  // Complex N-Layers Template
+  "complex-nlayers": [
+    "database/use-repository.md",
+    "database/use-unitofwork.md",
+    "database/use-service.md",
+    "core/entity-interfaces.md",
+  ],
+  
+  // Minimal API Template
+  "minimal-api": [
+    "database/use-repository.md",
+    "database/use-entity.md",
+  ],
+  
+  // AI Templates - Semantic Kernel
+  "sk-chat-completion": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "sk-plugins": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "sk-rag": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "sk-planners": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  
+  // AI Templates - SK Graph
+  "skg-graph-executor": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-react-agent": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-chain-of-thought": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-chatbot-memory": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-multi-agent": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-document-pipeline": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-human-in-loop": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-checkpointing": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-streaming": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "skg-observability": [
+    "ai-context/ai-decision-matrix.md",
+    "ai-context/observability-patterns.md",
+  ],
+  
+  // AI Templates - Agent Framework
+  "agent-framework-basic": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "agent-framework-workflows": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "agent-framework-multi-agent": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+  "agent-framework-middleware": [
+    "ai-context/ai-decision-matrix.md",
+  ],
+};
+
+/**
+ * Get description for context sections
+ */
+function getContextDescription(templateName: string): string {
+  const descriptions: Record<string, string> = {
+    "cqrs": "CQRS patterns including commands, queries, behaviors, and data access patterns",
+    "event-driven": "Event-driven patterns including domain events, integration events, and messaging",
+    "ddd": "Domain-Driven Design patterns including value objects, entities, and domain events",
+    "clean-architecture": "Clean Architecture patterns with CQRS and repository abstractions",
+    "hexagonal": "Hexagonal/Ports & Adapters patterns with infrastructure abstractions",
+    "microservices": "Microservices patterns including messaging, resilience, and containerization",
+    "simple-nlayers": "Basic N-Layer patterns with repository and entity setup",
+    "complex-nlayers": "Advanced N-Layer patterns with unit of work and service layer",
+    "minimal-api": "Minimal API patterns with basic data access",
+  };
+  
+  return descriptions[templateName] || "Related patterns and documentation";
+}
+
+/**
+ * Format document title from filename
+ */
+function formatDocTitle(docName: string): string {
+  return docName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Get suggested next steps based on template type
+ */
+function getNextSteps(templateName: string): string {
+  const steps: Record<string, string> = {
+    "cqrs": `
+## Suggested Next Steps
+
+1. **Database Setup**: \`mvp24h_database_advisor({ patterns: ["repository", "unit-of-work"] })\`
+2. **Add Observability**: \`mvp24h_observability_setup({ component: "overview" })\`
+3. **Add Resilience**: \`mvp24h_cqrs_guide({ topic: "resilience" })\`
+4. **Validation**: \`mvp24h_cqrs_guide({ topic: "validation" })\`
+`,
+    "event-driven": `
+## Suggested Next Steps
+
+1. **Configure Messaging**: \`mvp24h_messaging_patterns({ pattern: "rabbitmq" })\`
+2. **Add Resilience**: \`mvp24h_cqrs_guide({ topic: "resilience" })\`
+3. **Event Sourcing**: \`mvp24h_cqrs_guide({ topic: "event-sourcing" })\`
+4. **Observability**: \`mvp24h_observability_setup({ component: "tracing" })\`
+`,
+    "ddd": `
+## Suggested Next Steps
+
+1. **Value Objects**: \`mvp24h_core_patterns({ topic: "value-objects" })\`
+2. **Entity Design**: \`mvp24h_core_patterns({ topic: "entity-interfaces" })\`
+3. **Repository Setup**: \`mvp24h_database_advisor({ patterns: ["repository"] })\`
+4. **Domain Events**: \`mvp24h_cqrs_guide({ topic: "domain-events" })\`
+`,
+    "clean-architecture": `
+## Suggested Next Steps
+
+1. **Repository Pattern**: \`mvp24h_database_advisor({ patterns: ["repository", "unit-of-work"] })\`
+2. **CQRS Integration**: \`mvp24h_cqrs_guide({ topic: "overview" })\`
+3. **Validation**: \`mvp24h_reference_guide({ topic: "validation" })\`
+4. **Testing**: \`mvp24h_testing_patterns({ topic: "overview" })\`
+`,
+    "hexagonal": `
+## Suggested Next Steps
+
+1. **Infrastructure Abstractions**: \`mvp24h_core_patterns({ topic: "infrastructure-abstractions" })\`
+2. **Repository Adapters**: \`mvp24h_database_advisor({ patterns: ["repository"] })\`
+3. **Testing Ports**: \`mvp24h_testing_patterns({ topic: "mocking" })\`
+`,
+    "microservices": `
+## Suggested Next Steps
+
+1. **Messaging Setup**: \`mvp24h_messaging_patterns({ pattern: "rabbitmq" })\`
+2. **Resilience Patterns**: \`mvp24h_modernization_guide({ feature: "http-resilience" })\`
+3. **Containerization**: \`mvp24h_containerization_patterns({ topic: "kubernetes" })\`
+4. **Observability**: \`mvp24h_observability_setup({ component: "overview" })\`
+`,
+  };
+  
+  return steps[templateName] || "";
 }
 
 export async function getTemplate(args: unknown): Promise<string> {
-  const { template_name } = args as GetTemplateArgs;
+  const { template_name, include_context } = args as GetTemplateArgs;
+  
+  // Determine if we should include context (default: true for architecture templates)
+  const architectureTemplates = [
+    "minimal-api", "simple-nlayers", "complex-nlayers", "cqrs", 
+    "event-driven", "hexagonal", "clean-architecture", "ddd", "microservices"
+  ];
+  const shouldIncludeContext = include_context ?? architectureTemplates.includes(template_name);
 
   // Map template names to documentation files
   const templateMap: Record<string, string> = {
@@ -130,18 +366,58 @@ mvp24h_get_template({ template_name: "clean-architecture" })
   try {
     if (docExists(docPath)) {
       const content = loadDoc(docPath);
-      return `# Template: ${formatTemplateName(template_name)}
+      
+      // Build output with optional context
+      let output = `# Template: ${formatTemplateName(template_name)}
 
 ${content}
+`;
+
+      // Add related context if requested
+      if (shouldIncludeContext && templateContextMap[template_name]) {
+        const contextDocs = templateContextMap[template_name];
+        const contextDescription = getContextDescription(template_name);
+        
+        output += `
+---
+
+## Related Context: ${contextDescription}
+
+`;
+        // Load each context document
+        for (const contextDoc of contextDocs) {
+          if (docExists(contextDoc)) {
+            try {
+              const contextContent = loadDoc(contextDoc);
+              const docTitle = contextDoc.split('/').pop()?.replace('.md', '') || contextDoc;
+              output += `### ${formatDocTitle(docTitle)}
+
+${contextContent}
 
 ---
 
+`;
+            } catch {
+              // Skip if document can't be loaded
+            }
+          }
+        }
+      }
+      
+      // Add related tools section
+      output += `
 ## Related Tools
 
 - \`mvp24h_architecture_advisor\`: Get architecture recommendations
 - \`mvp24h_database_advisor\`: Configure database layer
 - \`mvp24h_observability_setup\`: Add telemetry
+- \`mvp24h_build_context\`: Build complete context with multiple resources
 `;
+
+      // Add next steps based on template type
+      output += getNextSteps(template_name);
+      
+      return output;
     }
   } catch {
     // Fall through to inline template
