@@ -198,10 +198,10 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 2.1 Nova Tool: `build-context.ts`
 **Arquivo:** `src/tools/build-context.ts`
-**Status:** 🆕 Criar
+**Status:** ✅ Concluído
 
-- [ ] Criar arquivo `src/tools/build-context.ts`
-- [ ] Definir schema com parâmetros:
+- [x] Criar arquivo `src/tools/build-context.ts`
+- [x] Definir schema com parâmetros:
   ```typescript
   {
     architecture: enum ["cqrs", "event-driven", "clean-architecture", "ddd", 
@@ -212,11 +212,11 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
     database_provider?: enum ["postgresql", "sqlserver", "mysql", "mongodb", "redis"]
   }
   ```
-- [ ] Implementar lógica de combinação de contexto:
-  - [ ] Mapeamento de arquitetura para docs principais
-  - [ ] Mapeamento de recursos para docs adicionais
-  - [ ] Mapeamento de database_provider para configuração específica
-- [ ] Criar `architectureContextMap`:
+- [x] Implementar lógica de combinação de contexto:
+  - [x] Mapeamento de arquitetura para docs principais
+  - [x] Mapeamento de recursos para docs adicionais
+  - [x] Mapeamento de database_provider para configuração específica
+- [x] Criar `architectureContextMap`:
   ```typescript
   {
     "cqrs": [
@@ -236,7 +236,7 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
     // ... outros
   }
   ```
-- [ ] Criar `resourceContextMap`:
+- [x] Criar `resourceContextMap`:
   ```typescript
   {
     "database": ["ai-context/database-patterns.md"],
@@ -248,9 +248,9 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
     "containerization": ["ai-context/containerization-patterns.md"]
   }
   ```
-- [ ] Implementar função `buildContext(args)`
-- [ ] Adicionar seção "Next Steps" com tools relacionadas
-- [ ] Exportar `buildContext` e `buildContextSchema`
+- [x] Implementar função `buildContext(args)`
+- [x] Adicionar seção "Next Steps" com tools relacionadas
+- [x] Exportar `buildContext` e `buildContextSchema`
 
 ---
 
@@ -306,10 +306,10 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
 
 ### 5.1 Atualizar `index.ts`
 **Arquivo:** `src/index.ts`
-**Status:** ⏳ Pendente
+**Status:** ✅ Concluído
 
-- [ ] Importar `buildContext` e `buildContextSchema` de `./tools/build-context.js`
-- [ ] Adicionar tool na lista `ListToolsRequestSchema`:
+- [x] Importar `buildContext` e `buildContextSchema` de `./tools/build-context.js`
+- [x] Adicionar tool na lista `ListToolsRequestSchema`:
   ```typescript
   {
     name: "mvp24h_build_context",
@@ -319,7 +319,7 @@ Reorganizar o MCP para que cada arquitetura ou recurso forneça contexto complet
     inputSchema: buildContextSchema,
   }
   ```
-- [ ] Adicionar case no switch de `CallToolRequestSchema`:
+- [x] Adicionar case no switch de `CallToolRequestSchema`:
   ```typescript
   case "mvp24h_build_context":
     return { content: [{ type: "text", text: await buildContext(args) }] };

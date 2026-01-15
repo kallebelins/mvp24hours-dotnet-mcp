@@ -35,6 +35,7 @@ import { referenceGuide, referenceGuideSchema } from "./tools/reference-guide.js
 import { testingPatterns, testingPatternsSchema } from "./tools/testing-patterns.js";
 import { securityPatterns, securityPatternsSchema } from "./tools/security-patterns.js";
 import { containerizationPatterns, containerizationPatternsSchema } from "./tools/containerization-patterns.js";
+import { buildContext, buildContextSchema } from "./tools/build-context.js";
 import { loadDoc, docExists } from "./utils/doc-loader.js";
 
 const server = new Server(
@@ -179,6 +180,16 @@ configuration (ConfigMaps, secrets).
 Returns: Containerization documentation with YAML/Dockerfile examples.`,
         inputSchema: containerizationPatternsSchema,
       },
+      {
+        name: "mvp24h_build_context",
+        description: `Builds complete context for implementing a .NET application.
+Combines architecture template with selected resources (database, caching, observability, etc.).
+Use this tool to get a comprehensive view of all documentation needed for a specific architecture.
+Architectures: cqrs, event-driven, clean-architecture, ddd, hexagonal, minimal-api, simple-nlayers, complex-nlayers, microservices.
+Resources: database, caching, observability, messaging, security, testing, containerization.
+Returns: Complete documentation for the chosen architecture and resources, with implementation checklist.`,
+        inputSchema: buildContextSchema,
+      },
     ],
   };
 });
@@ -233,6 +244,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       
       case "mvp24h_containerization_patterns":
         return { content: [{ type: "text", text: await containerizationPatterns(args) }] };
+      
+      case "mvp24h_build_context":
+        return { content: [{ type: "text", text: await buildContext(args) }] };
       
       default:
         throw new Error(`Unknown tool: ${name}`);
