@@ -20,7 +20,7 @@ Complete reference of all NuGet packages in the Mvp24Hours framework.
 | `Mvp24Hours.WebAPI` | Web API utilities, Swagger | 9.1.x |
 
 **Target Framework:** .NET 9.0  
-**Current Version:** 9.1.20
+**Current Version:** 9.1.21
 
 ---
 
@@ -308,3 +308,4 @@ Mvp24Hours.Core (standalone)
 - [Quick Reference](quick-reference.md)
 - [Getting Started](../getting-started.md)
 - [Architecture Templates](architecture-templates.md)
+

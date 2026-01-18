@@ -1,0 +1,19 @@
+# Prometheus Configuration for Mvp24Hours Samples
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # .NET Applications
+  - job_name: 'dotnet-apps'
+    static_configs:
+      - targets: 
+          - 'host.docker.internal:5000'  # Sample WebAPI
+          - 'host.docker.internal:5001'  # Sample WebAPI (HTTPS)
+    metrics_path: '/metrics'

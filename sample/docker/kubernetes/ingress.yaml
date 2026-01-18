@@ -1,0 +1,27 @@
+# Kubernetes Ingress for Mvp24Hours Sample Application
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mvp24hours-api
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.mvp24hours.local
+      secretName: mvp24hours-tls
+  rules:
+    - host: api.mvp24hours.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mvp24hours-api
+                port:
+                  number: 80

@@ -1,0 +1,16 @@
+# Kubernetes ConfigMap for Mvp24Hours Sample Application
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mvp24hours-config
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft: "Warning"
+  Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"
+  OpenTelemetry__Exporter: "otlp"
+  OpenTelemetry__Endpoint: "http://jaeger:4317"
+  HealthChecks__Enabled: "true"
+  RateLimiting__Enabled: "true"
+  RateLimiting__PermitLimit: "100"
+  RateLimiting__Window: "60"

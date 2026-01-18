@@ -1,0 +1,93 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SourceLink -->
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+
+    <!-- Mvp24Hours Packages -->
+    <PackageVersion Include="Mvp24Hours.Core" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Application" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Caching" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Caching.Redis" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Cqrs" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.CronJob" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Data.EFCore" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Data.MongoDb" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.Pipe" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.Infrastructure.RabbitMQ" Version="9.1.21" />
+    <PackageVersion Include="Mvp24Hours.WebAPI" Version="9.1.21" />
+
+    <!-- Microsoft Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="9.4.0" />
+    <PackageVersion Include="Microsoft.Extensions.Resilience" Version="9.0.0" />
+
+    <!-- Entity Framework Core -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+    <PackageVersion Include="MySql.EntityFrameworkCore" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+
+    <!-- MongoDB -->
+    <PackageVersion Include="MongoDB.Driver" Version="3.1.0" />
+
+    <!-- Redis -->
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
+
+    <!-- Validation -->
+    <PackageVersion Include="FluentValidation" Version="11.11.0" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+
+    <!-- Mapping -->
+    <PackageVersion Include="AutoMapper" Version="13.0.1" />
+
+    <!-- OpenTelemetry -->
+    <PackageVersion Include="OpenTelemetry" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.10.0-rc.1" />
+
+    <!-- Swagger -->
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="FluentAssertions" Version="6.12.2" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Testcontainers" Version="4.1.0" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.1.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.1.0" />
+    <PackageVersion Include="Testcontainers.MongoDb" Version="4.1.0" />
+    <PackageVersion Include="Testcontainers.Redis" Version="4.1.0" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.1.0" />
+
+    <!-- Health Checks -->
+    <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.2" />
+    <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.2" />
+    <PackageVersion Include="AspNetCore.HealthChecks.MySql" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.MongoDb" Version="8.1.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.2" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
+
+    <!-- JSON -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+</Project>

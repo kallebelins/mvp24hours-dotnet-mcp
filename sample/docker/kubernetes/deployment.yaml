@@ -1,0 +1,77 @@
+# Kubernetes Deployment for Mvp24Hours Sample Application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mvp24hours-api
+  labels:
+    app: mvp24hours-api
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mvp24hours-api
+  template:
+    metadata:
+      labels:
+        app: mvp24hours-api
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: mvp24hours-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:80"
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: mvp24hours-secrets
+                  key: db-connection-string
+            - name: Redis__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mvp24hours-secrets
+                  key: redis-connection-string
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/startup
+              port: 80
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+      terminationGracePeriodSeconds: 30
